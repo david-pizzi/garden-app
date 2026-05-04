@@ -641,6 +641,9 @@
             style="font-family:monospace;font-size:11px;"
           >${esc(state.importText)}</textarea>
           <button class="save-note-btn" id="do-import">Load from text</button>
+
+          <div class="section-label" style="margin-top:14px;">Danger zone</div>
+          <button class="btn-danger" id="do-reset" style="width:100%;padding:10px;">Reset to default — clear all data</button>
         </div>`;
     }
 
@@ -835,6 +838,13 @@
 
           document.getElementById("do-import")?.addEventListener("click", () => {
             importFromText(document.getElementById("import-text")?.value || "");
+          });
+
+          document.getElementById("do-reset")?.addEventListener("click", () => {
+            if (!confirm("Reset to default? All plant data will be cleared.")) return;
+            localStorage.removeItem(STORAGE_KEY);
+            state.plants = JSON.parse(JSON.stringify(INITIAL_PLANTS));
+            render();
           });
         }
 
