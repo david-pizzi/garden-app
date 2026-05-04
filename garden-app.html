@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Violetta's Growing Journal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, serif;
+      background: #f5f0eb;
+      color: #2d3a2d;
+      min-height: 100vh;
+    }
+
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px 16px 80px;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: normal;
+      color: #2d4a2d;
+      line-height: 1.2;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .header-icon { font-size: 28px; }
+
+    .manage-btn {
+      font-size: 11px;
+      color: #8a9a8a;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: sans-serif;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .manage-btn.active { color: #2d4a2d; }
+
+    .date-line {
+      font-size: 13px;
+      color: #8a9a8a;
+      font-family: sans-serif;
+      margin-bottom: 20px;
+    }
+
+    /* ── Summary strip ── */
+    .summary-strip {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .summary-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      background: #fff;
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: sans-serif;
+      border: 1px solid #ede8e0;
+    }
+
+    /* ── Storage panel ── */
+    .storage-panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #b5d0b5;
+      margin-bottom: 20px;
+    }
+
+    .snap-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f4f0ea;
+    }
+
+    .snap-row:last-child { border-bottom: none; }
+
+    .snap-name {
+      flex: 1;
+      font-size: 14px;
+      color: #2d4a2d;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      background: #f0ece6;
+      color: #555;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: sans-serif;
+    }
+
+    .btn-danger {
+      padding: 5px 10px;
+      background: #fff0f0;
+      color: #cc4a20;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: sans-serif;
+    }
+
+    .io-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .io-btn {
+      flex: 1;
+      padding: 9px;
+      background: #f0f7f0;
+      color: #2d4a2d;
+      border: 1px solid #b5d0b5;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    /* ── Plant cards ── */
+    .plant-card {
+      background: #fff;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border: 1px solid #ede8e0;
+      cursor: pointer;
+    }
+
+    .plant-card-main {
+      display: flex;
+      align-items: center;
+      padding: 14px;
+      gap: 12px;
+    }
+
+    .location-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .plant-name {
+      font-size: 15px;
+      color: #2d4a2d;
+      margin-bottom: 4px;
+    }
+
+    .plant-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .tag {
+      font-size: 11px;
+      font-family: sans-serif;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .tag-loc  { background: #f0f7f0; color: #3a6a3a; }
+    .tag-day  { background: #f0f4ff; color: #4a5aaa; }
+    .tag-due  { background: #fff3f0; color: #cc4a20; font-weight: 600; }
+
+    .chevron { color: #c0d0c0; margin-left: auto; font-size: 20px; line-height: 1; }
+
+    /* ── Quick actions ── */
+    .quick-actions {
+      display: flex;
+      border-top: 1px solid #f0ece6;
+    }
+
+    .quick-btn {
+      flex: 1;
+      padding: 8px 2px;
+      background: none;
+      border: none;
+      border-right: 1px solid #f0ece6;
+      font-size: 10px;
+      cursor: pointer;
+      font-family: sans-serif;
+      color: #5a7a5a;
+    }
+
+    .quick-btn:last-child { border-right: none; }
+    .quick-btn.done { color: #059669; font-weight: 600; }
+
+    /* ── Add plant ── */
+    .add-plant-btn {
+      width: 100%;
+      padding: 14px;
+      background: none;
+      border: 2px dashed #b5c9b5;
+      border-radius: 12px;
+      color: #5a8a5a;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: Georgia, serif;
+    }
+
+    .add-plant-form {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #ede8e0;
+    }
+
+    .input-text {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d0ddd0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: Georgia, serif;
+      margin-bottom: 10px;
+    }
+
+    .btn-row { display: flex; gap: 8px; }
+
+    .btn-primary {
+      flex: 1;
+      padding: 10px;
+      background: #2d4a2d;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: Georgia, serif;
+    }
+
+    .btn-secondary {
+      padding: 10px 16px;
+      background: #f0ece6;
+      color: #555;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* ── Detail view ── */
+    .back-btn {
+      background: none;
+      border: none;
+      color: #a8c5a0;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 12px;
+      font-family: Georgia, serif;
+      display: block;
+    }
+
+    .detail-title {
+      font-size: 22px;
+      color: #2d4a2d;
+      margin-bottom: 8px;
+    }
+
+    .detail-meta {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .section-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #ede8e0;
+      margin-bottom: 12px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      color: #8a9a8a;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      font-family: sans-serif;
+    }
+
+    .date-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f4f0ea;
+    }
+
+    .date-row:last-child { border-bottom: none; }
+
+    .date-label {
+      font-size: 13px;
+      color: #555;
+      font-family: sans-serif;
+    }
+
+    .date-value {
+      font-size: 12px;
+      color: #555;
+      font-family: sans-serif;
+      margin-right: 8px;
+    }
+
+    .date-input {
+      padding: 4px 8px;
+      border: 1px solid #b5d0b5;
+      border-radius: 6px;
+      font-size: 12px;
+      background: #f0f7f0;
+      color: #2d4a2d;
+      font-family: sans-serif;
+      cursor: pointer;
+    }
+
+    .location-select {
+      padding: 4px 8px;
+      border: 1px solid #b5d0b5;
+      border-radius: 6px;
+      font-size: 12px;
+      background: #f0f7f0;
+      color: #3a6a3a;
+      font-family: sans-serif;
+    }
+
+    .note-textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d5e5d5;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: Georgia, serif;
+      resize: none;
+      margin-bottom: 8px;
+    }
+
+    .save-note-btn {
+      width: 100%;
+      padding: 10px;
+      background: #2d4a2d;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: Georgia, serif;
+    }
+
+    /* ── Event log ── */
+    .event-row {
+      display: flex;
+      gap: 10px;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #f4f0ea;
+    }
+
+    .event-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .event-date {
+      font-size: 11px;
+      color: #8a9a8a;
+      font-family: sans-serif;
+      white-space: nowrap;
+      padding-top: 2px;
+      min-width: 72px;
+    }
+
+    .event-type {
+      font-size: 12px;
+      background: #f0f7f0;
+      color: #3a6a3a;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: sans-serif;
+      margin-right: 6px;
+    }
+
+    .event-detail { font-size: 13px; color: #444; }
+
+    /* ── Card dates row ── */
+    .plant-dates {
+      font-size: 11px;
+      color: #7a8a7a;
+      font-family: sans-serif;
+      margin-top: 5px;
+    }
+
+    .plant-dates span { margin-right: 8px; }
+
+    /* ── Delete plant button ── */
+    .delete-plant-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .delete-plant-btn:hover { color: #cc4a20; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const INITIAL_PLANTS = [
+      { id: 1, name: "Dragon Egg Cucumber", variety: "Dragon Egg", sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
+      { id: 2, name: "Melba Melon",          variety: "Melba",        sowDate: null, potOnDate: null, lastFed: null, location: "greenhouse",        events: [] },
+      { id: 3, name: "Cosmic Fusion Tomato", variety: "Cosmic Fusion",sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
+      { id: 4, name: "Black Cherry Tomato",  variety: "Black Cherry", sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
+      { id: 5, name: "Habanada Pepper",      variety: "Habanada",     sowDate: null, potOnDate: null, lastFed: null, location: "greenhouse",        events: [] },
+      { id: 6, name: "Strawflower",          variety: "Mixed",        sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
+      { id: 7, name: "Leek",                 variety: "Direct sown",  sowDate: null, potOnDate: null, lastFed: null, location: "greenhouse",        events: [] },
+    ];
+
+    const LOCATIONS = ["indoor (grow light)", "greenhouse", "raised bed", "hardening off"];
+
+    const LOCATION_COLORS = {
+      "indoor (grow light)": "#7c3aed",
+      "greenhouse":          "#059669",
+      "raised bed":          "#b45309",
+      "hardening off":       "#0369a1",
+    };
+
+    const LOCATION_ICONS = {
+      "indoor (grow light)": "💡",
+      "greenhouse":          "🌿",
+      "raised bed":          "🌱",
+      "hardening off":       "🌤️",
+    };
+
+    const STORAGE_KEY    = "violetta-garden-tracker-v1";
+    const SNAPSHOT_PREFIX = "violetta-snap-";
+
+    // ── State ──────────────────────────────────────────────────────────────
+    const state = {
+      plants:          loadPlants(),
+      view:            "home",
+      selectedPlantId: null,
+      addingPlant:     false,
+      currentNote:     "",
+      storageOpen:     false,
+      snapshotName:    "",
+      importText:      "",
+    };
+
+    function loadPlants() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : INITIAL_PLANTS;
+      } catch { return INITIAL_PLANTS; }
+    }
+
+    function savePlants() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.plants)); } catch {}
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+    function daysSince(dateStr) {
+      if (!dateStr) return null;
+      return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "—";
+      return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    }
+
+    function todayStr() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function shortAgo(dateStr) {
+      if (!dateStr) return null;
+      const d = daysSince(dateStr);
+      if (d === 0) return "today";
+      if (d === 1) return "yesterday";
+      return `${d}d ago`;
+    }
+
+    function esc(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // ── Data mutations ─────────────────────────────────────────────────────
+    function updatePlant(id, updates) {
+      state.plants = state.plants.map(p => p.id === id ? { ...p, ...updates } : p);
+      savePlants();
+    }
+
+    function deletePlant(id) {
+      if (!confirm(`Delete this plant? This cannot be undone.`)) return;
+      state.plants = state.plants.filter(p => p.id !== id);
+      savePlants();
+      render();
+    }
+
+    function logEvent(plantId, type, detail = "") {
+      const ev = { date: todayStr(), type, detail };
+      state.plants = state.plants.map(p =>
+        p.id === plantId
+          ? { ...p, events: [ev, ...(p.events || [])].slice(0, 30) }
+          : p
+      );
+      savePlants();
+    }
+
+    // ── Storage management ─────────────────────────────────────────────────
+    function listSnapshots() {
+      const names = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(SNAPSHOT_PREFIX)) {
+          names.push(key.slice(SNAPSHOT_PREFIX.length));
+        }
+      }
+      return names.sort();
+    }
+
+    function saveSnapshot(name) {
+      if (!name.trim()) return;
+      localStorage.setItem(SNAPSHOT_PREFIX + name.trim(), JSON.stringify(state.plants));
+    }
+
+    function loadSnapshot(name) {
+      try {
+        const data = localStorage.getItem(SNAPSHOT_PREFIX + name);
+        if (!data) return;
+        state.plants = JSON.parse(data);
+        savePlants();
+        state.storageOpen = false;
+        render();
+      } catch { alert("Could not load snapshot."); }
+    }
+
+    function deleteSnapshot(name) {
+      if (!confirm(`Delete snapshot "${name}"?`)) return;
+      localStorage.removeItem(SNAPSHOT_PREFIX + name);
+      render();
+    }
+
+    function importFromText(text) {
+      try {
+        const data = JSON.parse(text);
+        if (!Array.isArray(data)) throw new Error();
+        if (!confirm(`Import ${data.length} plants? This will replace your current data.`)) return;
+        state.plants = data;
+        savePlants();
+        state.storageOpen = false;
+        state.importText = "";
+        render();
+      } catch { alert("Invalid JSON — paste a valid garden data export."); }
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────
+    function render() {
+      document.getElementById("app").innerHTML =
+        state.view === "detail" ? renderDetail() : renderHome();
+      attachEvents();
+    }
+
+    function renderStoragePanel() {
+      const snaps = listSnapshots();
+
+      const snapRows = snaps.length > 0 ? `
+        <div class="section-label" style="margin-top:14px;">Saved snapshots</div>
+        ${snaps.map(name => `
+          <div class="snap-row">
+            <span class="snap-name">${esc(name)}</span>
+            <button class="btn-sm" data-load-snap="${esc(name)}">Load</button>
+            <button class="btn-danger" data-del-snap="${esc(name)}">Delete</button>
+          </div>`).join("")}` : "";
+
+      return `
+        <div class="storage-panel">
+          <div class="section-label">Save a snapshot</div>
+          <div style="display:flex;gap:8px;">
+            <input id="snap-name" class="input-text" type="text" placeholder="e.g. Week 3, Before repot…"
+              value="${esc(state.snapshotName)}" style="margin-bottom:0;flex:1;">
+            <button class="btn-primary" id="do-save-snap" style="flex:none;padding:10px 14px;font-size:13px;">Save</button>
+          </div>
+          ${snapRows}
+          <div class="section-label" style="margin-top:14px;">Export</div>
+          <textarea class="note-textarea" rows="4" readonly
+            onclick="this.select()"
+            style="font-family:monospace;font-size:11px;color:#444;cursor:pointer;"
+            title="Click to select all, then copy"
+          >${esc(JSON.stringify(state.plants, null, 2))}</textarea>
+
+          <div class="section-label" style="margin-top:6px;">Import — paste JSON below</div>
+          <textarea class="note-textarea" id="import-text" rows="4"
+            placeholder="Paste exported JSON here…"
+            style="font-family:monospace;font-size:11px;"
+          >${esc(state.importText)}</textarea>
+          <button class="save-note-btn" id="do-import">Load from text</button>
+        </div>`;
+    }
+
+    function renderHome() {
+      const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+
+      const chips = Object.entries(LOCATION_ICONS).map(([loc, icon]) => {
+        const n = state.plants.filter(p => p.location === loc).length;
+        return n > 0 ? `<div class="summary-chip">${icon} ${n}</div>` : "";
+      }).join("");
+
+      const cards = state.plants.map(plant => {
+        const sowDays = daysSince(plant.sowDate);
+        const fedDays = daysSince(plant.lastFed);
+        const overdue = fedDays !== null && fedDays > 10;
+        const color   = LOCATION_COLORS[plant.location] || "#64748b";
+
+        const tags = [
+          `<span class="tag tag-loc">${esc(plant.location)}</span>`,
+          sowDays !== null ? `<span class="tag tag-day">day ${sowDays}</span>` : "",
+          overdue         ? `<span class="tag tag-due">feed due</span>`        : "",
+        ].join("");
+
+        const dateParts = [
+          plant.sowDate   ? `🌱 Sown ${formatDate(plant.sowDate)}`   : null,
+          plant.lastFed   ? `💧 Fed ${shortAgo(plant.lastFed)}`      : null,
+          plant.potOnDate ? `🪴 Potted ${formatDate(plant.potOnDate)}` : null,
+        ].filter(Boolean);
+        const datesRow = dateParts.length > 0
+          ? `<div class="plant-dates">${dateParts.map(d => `<span>${d}</span>`).join("")}</div>`
+          : "";
+
+        const btns = [
+          { label: plant.sowDate   ? "✓ Sown"   : "+ Sow",    type: "sow",   done: !!plant.sowDate },
+          { label: plant.potOnDate ? "✓ Potted" : "+ Pot on", type: "poton", done: !!plant.potOnDate },
+          { label: "💧 Fed",  type: "fed",  done: false },
+          { label: "📍 Move", type: "move", done: false },
+        ].map(b =>
+          `<button class="quick-btn${b.done ? " done" : ""}" data-action="${b.type}" data-plant="${plant.id}">${b.label}</button>`
+        ).join("");
+
+        return `
+          <div class="plant-card" data-open="${plant.id}">
+            <div class="plant-card-main">
+              <div class="location-icon" style="background:${color}22;">${LOCATION_ICONS[plant.location] || "🌱"}</div>
+              <div style="flex:1;min-width:0;">
+                <div class="plant-name">${esc(plant.name)}</div>
+                <div class="plant-meta">${tags}</div>
+                ${datesRow}
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;align-self:stretch;padding-left:8px;">
+                <button class="delete-plant-btn" data-del-plant="${plant.id}" title="Delete plant">×</button>
+                <div class="chevron">›</div>
+              </div>
+            </div>
+            <div class="quick-actions">${btns}</div>
+          </div>`;
+      }).join("");
+
+      const addSection = state.addingPlant ? `
+        <div class="add-plant-form">
+          <input id="new-plant-name" class="input-text" type="text" placeholder="Plant name (e.g. Borlotti Bean)" autofocus>
+          <div class="btn-row">
+            <button class="btn-primary" id="confirm-add">Add Plant</button>
+            <button class="btn-secondary" id="cancel-add">Cancel</button>
+          </div>
+        </div>` : `
+        <button class="add-plant-btn" id="start-add">+ Add another plant</button>`;
+
+      return `
+        <div class="header">
+          <h1>Violetta's<br>Growing Journal</h1>
+          <div class="header-right">
+            <span class="header-icon">🌿</span>
+            <button class="manage-btn${state.storageOpen ? " active" : ""}" id="toggle-storage">
+              ${state.storageOpen ? "✕ close" : "💾 manage data"}
+            </button>
+          </div>
+        </div>
+        <div class="date-line">${today}</div>
+        ${state.storageOpen ? renderStoragePanel() : ""}
+        <div class="summary-strip">${chips}</div>
+        ${cards}
+        ${addSection}`;
+    }
+
+    function renderDetail() {
+      const p = state.plants.find(pl => pl.id === state.selectedPlantId);
+      if (!p) return "";
+
+      const sowDays = daysSince(p.sowDate);
+      const color   = LOCATION_COLORS[p.location] || "#64748b";
+
+      const dateRows = [
+        { label: "Sown",      date: p.sowDate,  field: "sowDate"   },
+        { label: "Potted on", date: p.potOnDate, field: "potOnDate" },
+        { label: "Last fed",  date: p.lastFed,   field: "lastFed"   },
+      ].map(item => `
+        <div class="date-row">
+          <span class="date-label">${item.label}</span>
+          <div style="display:flex;align-items:center;">
+            ${item.date ? `<span class="date-value">${formatDate(item.date)}</span>` : ""}
+            <input type="date" class="date-input" data-field="${item.field}" value="${item.date || ""}" max="${todayStr()}">
+          </div>
+        </div>`).join("");
+
+      const locOptions = LOCATIONS.map(loc =>
+        `<option value="${esc(loc)}"${p.location === loc ? " selected" : ""}>${LOCATION_ICONS[loc]} ${esc(loc)}</option>`
+      ).join("");
+
+      const history = p.events && p.events.length > 0 ? `
+        <div class="section-card">
+          <div class="section-label">History</div>
+          ${p.events.map(ev => `
+            <div class="event-row">
+              <div class="event-date">${formatDate(ev.date)}</div>
+              <div>
+                <span class="event-type">${esc(ev.type)}</span>
+                ${ev.detail ? `<span class="event-detail">${esc(ev.detail)}</span>` : ""}
+              </div>
+            </div>`).join("")}
+        </div>` : "";
+
+      return `
+        <button class="back-btn" id="back-home">← All plants</button>
+        <div class="detail-title">${esc(p.name)}</div>
+        <div class="detail-meta">
+          <span class="tag tag-loc" style="background:${color}22;color:${color};">${LOCATION_ICONS[p.location]} ${esc(p.location)}</span>
+          ${sowDays !== null ? `<span class="tag tag-day">Day ${sowDays}</span>` : ""}
+        </div>
+
+        <div class="section-card">
+          <div class="section-label">Key dates</div>
+          ${dateRows}
+          <div class="date-row" style="border-bottom:none;">
+            <span class="date-label">Location</span>
+            <select class="location-select" id="loc-select">${locOptions}</select>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-label">Add a note</div>
+          <textarea class="note-textarea" id="note-input" rows="3"
+            placeholder="e.g. Pinched out growing tip, spotted yellowing on lower leaves...">${esc(state.currentNote)}</textarea>
+          <button class="save-note-btn" id="save-note">Save note</button>
+        </div>
+
+        ${history}`;
+    }
+
+    // ── Events ─────────────────────────────────────────────────────────────
+    function attachEvents() {
+      if (state.view === "home") {
+
+        document.getElementById("toggle-storage")?.addEventListener("click", () => {
+          state.storageOpen = !state.storageOpen;
+          state.snapshotName = "";
+          render();
+        });
+
+        // Storage panel events
+        if (state.storageOpen) {
+          document.getElementById("snap-name")?.addEventListener("input", e => {
+            state.snapshotName = e.target.value;
+          });
+
+          document.getElementById("do-save-snap")?.addEventListener("click", () => {
+            const name = document.getElementById("snap-name")?.value?.trim();
+            if (!name) return;
+            saveSnapshot(name);
+            state.snapshotName = "";
+            render();
+          });
+
+          document.getElementById("snap-name")?.addEventListener("keydown", e => {
+            if (e.key === "Enter") document.getElementById("do-save-snap")?.click();
+          });
+
+          document.querySelectorAll("[data-load-snap]").forEach(btn => {
+            btn.addEventListener("click", () => loadSnapshot(btn.dataset.loadSnap));
+          });
+
+          document.querySelectorAll("[data-del-snap]").forEach(btn => {
+            btn.addEventListener("click", () => {
+              deleteSnapshot(btn.dataset.delSnap);
+            });
+          });
+
+          document.getElementById("import-text")?.addEventListener("input", e => {
+            state.importText = e.target.value;
+          });
+
+          document.getElementById("do-import")?.addEventListener("click", () => {
+            importFromText(document.getElementById("import-text")?.value || "");
+          });
+        }
+
+        // Delete plant buttons
+        document.querySelectorAll(".delete-plant-btn").forEach(btn => {
+          btn.addEventListener("click", e => {
+            e.stopPropagation();
+            deletePlant(parseInt(btn.dataset.delPlant));
+          });
+        });
+
+        // Plant cards
+        document.querySelectorAll(".plant-card").forEach(card => {
+          card.addEventListener("click", e => {
+            if (e.target.closest(".quick-actions")) return;
+            state.selectedPlantId = parseInt(card.dataset.open);
+            state.currentNote = "";
+            state.view = "detail";
+            render();
+          });
+        });
+
+        document.querySelectorAll(".quick-btn").forEach(btn => {
+          btn.addEventListener("click", e => {
+            e.stopPropagation();
+            const type    = btn.dataset.action;
+            const plantId = parseInt(btn.dataset.plant);
+            const today   = todayStr();
+
+            if (type === "sow")   { updatePlant(plantId, { sowDate: today });   logEvent(plantId, "sow",       formatDate(today)); }
+            if (type === "poton") { updatePlant(plantId, { potOnDate: today }); logEvent(plantId, "potted on",  formatDate(today)); }
+            if (type === "fed")   { updatePlant(plantId, { lastFed: today });   logEvent(plantId, "fed",       formatDate(today)); }
+            if (type === "move")  {
+              state.selectedPlantId = plantId;
+              state.currentNote = "";
+              state.view = "detail";
+              render();
+              setTimeout(() => document.getElementById("loc-select")?.focus(), 50);
+              return;
+            }
+            render();
+          });
+        });
+
+        document.getElementById("start-add")?.addEventListener("click", () => {
+          state.addingPlant = true;
+          render();
+          document.getElementById("new-plant-name")?.focus();
+        });
+
+        document.getElementById("confirm-add")?.addEventListener("click", confirmAddPlant);
+
+        document.getElementById("new-plant-name")?.addEventListener("keydown", e => {
+          if (e.key === "Enter") confirmAddPlant();
+        });
+
+        document.getElementById("cancel-add")?.addEventListener("click", () => {
+          state.addingPlant = false;
+          render();
+        });
+      }
+
+      if (state.view === "detail") {
+        document.getElementById("back-home")?.addEventListener("click", () => {
+          state.view = "home";
+          render();
+        });
+
+        document.querySelectorAll(".date-input").forEach(input => {
+          input.addEventListener("change", () => {
+            if (!input.value) return;
+            const field = input.dataset.field;
+            const label = { sowDate: "sow", potOnDate: "potted on", lastFed: "fed" }[field] || field;
+            updatePlant(state.selectedPlantId, { [field]: input.value });
+            logEvent(state.selectedPlantId, label, formatDate(input.value));
+            state.currentNote = document.getElementById("note-input")?.value || "";
+            render();
+          });
+        });
+
+        document.getElementById("loc-select")?.addEventListener("change", e => {
+          updatePlant(state.selectedPlantId, { location: e.target.value });
+          logEvent(state.selectedPlantId, "moved", `→ ${e.target.value}`);
+          state.currentNote = document.getElementById("note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("note-input")?.addEventListener("input", e => {
+          state.currentNote = e.target.value;
+        });
+
+        document.getElementById("save-note")?.addEventListener("click", () => {
+          const note = document.getElementById("note-input")?.value?.trim();
+          if (!note) return;
+          logEvent(state.selectedPlantId, "note", note);
+          state.currentNote = "";
+          render();
+        });
+      }
+
+    }
+
+    function confirmAddPlant() {
+      const name = document.getElementById("new-plant-name")?.value?.trim();
+      if (!name) return;
+      state.plants.push({
+        id: Date.now(), name, variety: "", sowDate: null,
+        potOnDate: null, lastFed: null,
+        location: "indoor (grow light)", events: [],
+      });
+      savePlants();
+      state.addingPlant = false;
+      render();
+    }
+
+    // ── Boot ───────────────────────────────────────────────────────────────
+    render();
+  </script>
+</body>
+</html>
