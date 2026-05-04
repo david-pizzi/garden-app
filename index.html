@@ -35,7 +35,28 @@
       line-height: 1.2;
     }
 
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
     .header-icon { font-size: 28px; }
+
+    .manage-btn {
+      font-size: 11px;
+      color: #8a9a8a;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: sans-serif;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .manage-btn.active { color: #2d4a2d; }
 
     .date-line {
       font-size: 13px;
@@ -62,6 +83,72 @@
       font-size: 13px;
       font-family: sans-serif;
       border: 1px solid #ede8e0;
+    }
+
+    /* ── Storage panel ── */
+    .storage-panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #b5d0b5;
+      margin-bottom: 20px;
+    }
+
+    .snap-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f4f0ea;
+    }
+
+    .snap-row:last-child { border-bottom: none; }
+
+    .snap-name {
+      flex: 1;
+      font-size: 14px;
+      color: #2d4a2d;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      background: #f0ece6;
+      color: #555;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: sans-serif;
+    }
+
+    .btn-danger {
+      padding: 5px 10px;
+      background: #fff0f0;
+      color: #cc4a20;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: sans-serif;
+    }
+
+    .io-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .io-btn {
+      flex: 1;
+      padding: 9px;
+      background: #f0f7f0;
+      color: #2d4a2d;
+      border: 1px solid #b5d0b5;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: sans-serif;
+      text-align: center;
     }
 
     /* ── Plant cards ── */
@@ -330,10 +417,35 @@
     }
 
     .event-detail { font-size: 13px; color: #444; }
+
+    /* ── Card dates row ── */
+    .plant-dates {
+      font-size: 11px;
+      color: #7a8a7a;
+      font-family: sans-serif;
+      margin-top: 5px;
+    }
+
+    .plant-dates span { margin-right: 8px; }
+
+    /* ── Delete plant button ── */
+    .delete-plant-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .delete-plant-btn:hover { color: #cc4a20; }
   </style>
 </head>
 <body>
   <div id="app"></div>
+
   <script>
     const INITIAL_PLANTS = [
       { id: 1, name: "Dragon Egg Cucumber", variety: "Dragon Egg", sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
@@ -361,15 +473,19 @@
       "hardening off":       "🌤️",
     };
 
-    const STORAGE_KEY = "violetta-garden-tracker-v1";
+    const STORAGE_KEY    = "violetta-garden-tracker-v1";
+    const SNAPSHOT_PREFIX = "violetta-snap-";
 
     // ── State ──────────────────────────────────────────────────────────────
     const state = {
       plants:          loadPlants(),
-      view:            "home",   // "home" | "detail"
+      view:            "home",
       selectedPlantId: null,
       addingPlant:     false,
       currentNote:     "",
+      storageOpen:     false,
+      snapshotName:    "",
+      importText:      "",
     };
 
     function loadPlants() {
@@ -398,6 +514,14 @@
       return new Date().toISOString().split("T")[0];
     }
 
+    function shortAgo(dateStr) {
+      if (!dateStr) return null;
+      const d = daysSince(dateStr);
+      if (d === 0) return "today";
+      if (d === 1) return "yesterday";
+      return `${d}d ago`;
+    }
+
     function esc(str) {
       return String(str ?? "")
         .replace(/&/g, "&amp;")
@@ -412,6 +536,13 @@
       savePlants();
     }
 
+    function deletePlant(id) {
+      if (!confirm(`Delete this plant? This cannot be undone.`)) return;
+      state.plants = state.plants.filter(p => p.id !== id);
+      savePlants();
+      render();
+    }
+
     function logEvent(plantId, type, detail = "") {
       const ev = { date: todayStr(), type, detail };
       state.plants = state.plants.map(p =>
@@ -422,11 +553,95 @@
       savePlants();
     }
 
+    // ── Storage management ─────────────────────────────────────────────────
+    function listSnapshots() {
+      const names = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(SNAPSHOT_PREFIX)) {
+          names.push(key.slice(SNAPSHOT_PREFIX.length));
+        }
+      }
+      return names.sort();
+    }
+
+    function saveSnapshot(name) {
+      if (!name.trim()) return;
+      localStorage.setItem(SNAPSHOT_PREFIX + name.trim(), JSON.stringify(state.plants));
+    }
+
+    function loadSnapshot(name) {
+      try {
+        const data = localStorage.getItem(SNAPSHOT_PREFIX + name);
+        if (!data) return;
+        state.plants = JSON.parse(data);
+        savePlants();
+        state.storageOpen = false;
+        render();
+      } catch { alert("Could not load snapshot."); }
+    }
+
+    function deleteSnapshot(name) {
+      if (!confirm(`Delete snapshot "${name}"?`)) return;
+      localStorage.removeItem(SNAPSHOT_PREFIX + name);
+      render();
+    }
+
+    function importFromText(text) {
+      try {
+        const data = JSON.parse(text);
+        if (!Array.isArray(data)) throw new Error();
+        if (!confirm(`Import ${data.length} plants? This will replace your current data.`)) return;
+        state.plants = data;
+        savePlants();
+        state.storageOpen = false;
+        state.importText = "";
+        render();
+      } catch { alert("Invalid JSON — paste a valid garden data export."); }
+    }
+
     // ── Render ─────────────────────────────────────────────────────────────
     function render() {
       document.getElementById("app").innerHTML =
         state.view === "detail" ? renderDetail() : renderHome();
       attachEvents();
+    }
+
+    function renderStoragePanel() {
+      const snaps = listSnapshots();
+
+      const snapRows = snaps.length > 0 ? `
+        <div class="section-label" style="margin-top:14px;">Saved snapshots</div>
+        ${snaps.map(name => `
+          <div class="snap-row">
+            <span class="snap-name">${esc(name)}</span>
+            <button class="btn-sm" data-load-snap="${esc(name)}">Load</button>
+            <button class="btn-danger" data-del-snap="${esc(name)}">Delete</button>
+          </div>`).join("")}` : "";
+
+      return `
+        <div class="storage-panel">
+          <div class="section-label">Save a snapshot</div>
+          <div style="display:flex;gap:8px;">
+            <input id="snap-name" class="input-text" type="text" placeholder="e.g. Week 3, Before repot…"
+              value="${esc(state.snapshotName)}" style="margin-bottom:0;flex:1;">
+            <button class="btn-primary" id="do-save-snap" style="flex:none;padding:10px 14px;font-size:13px;">Save</button>
+          </div>
+          ${snapRows}
+          <div class="section-label" style="margin-top:14px;">Export</div>
+          <textarea class="note-textarea" rows="4" readonly
+            onclick="this.select()"
+            style="font-family:monospace;font-size:11px;color:#444;cursor:pointer;"
+            title="Click to select all, then copy"
+          >${esc(JSON.stringify(state.plants, null, 2))}</textarea>
+
+          <div class="section-label" style="margin-top:6px;">Import — paste JSON below</div>
+          <textarea class="note-textarea" id="import-text" rows="4"
+            placeholder="Paste exported JSON here…"
+            style="font-family:monospace;font-size:11px;"
+          >${esc(state.importText)}</textarea>
+          <button class="save-note-btn" id="do-import">Load from text</button>
+        </div>`;
     }
 
     function renderHome() {
@@ -449,6 +664,15 @@
           overdue         ? `<span class="tag tag-due">feed due</span>`        : "",
         ].join("");
 
+        const dateParts = [
+          plant.sowDate   ? `🌱 Sown ${formatDate(plant.sowDate)}`   : null,
+          plant.lastFed   ? `💧 Fed ${shortAgo(plant.lastFed)}`      : null,
+          plant.potOnDate ? `🪴 Potted ${formatDate(plant.potOnDate)}` : null,
+        ].filter(Boolean);
+        const datesRow = dateParts.length > 0
+          ? `<div class="plant-dates">${dateParts.map(d => `<span>${d}</span>`).join("")}</div>`
+          : "";
+
         const btns = [
           { label: plant.sowDate   ? "✓ Sown"   : "+ Sow",    type: "sow",   done: !!plant.sowDate },
           { label: plant.potOnDate ? "✓ Potted" : "+ Pot on", type: "poton", done: !!plant.potOnDate },
@@ -462,11 +686,15 @@
           <div class="plant-card" data-open="${plant.id}">
             <div class="plant-card-main">
               <div class="location-icon" style="background:${color}22;">${LOCATION_ICONS[plant.location] || "🌱"}</div>
-              <div>
+              <div style="flex:1;min-width:0;">
                 <div class="plant-name">${esc(plant.name)}</div>
                 <div class="plant-meta">${tags}</div>
+                ${datesRow}
               </div>
-              <div class="chevron">›</div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;align-self:stretch;padding-left:8px;">
+                <button class="delete-plant-btn" data-del-plant="${plant.id}" title="Delete plant">×</button>
+                <div class="chevron">›</div>
+              </div>
             </div>
             <div class="quick-actions">${btns}</div>
           </div>`;
@@ -485,9 +713,15 @@
       return `
         <div class="header">
           <h1>Violetta's<br>Growing Journal</h1>
-          <span class="header-icon">🌿</span>
+          <div class="header-right">
+            <span class="header-icon">🌿</span>
+            <button class="manage-btn${state.storageOpen ? " active" : ""}" id="toggle-storage">
+              ${state.storageOpen ? "✕ close" : "💾 manage data"}
+            </button>
+          </div>
         </div>
         <div class="date-line">${today}</div>
+        ${state.storageOpen ? renderStoragePanel() : ""}
         <div class="summary-strip">${chips}</div>
         ${cards}
         ${addSection}`;
@@ -501,9 +735,9 @@
       const color   = LOCATION_COLORS[p.location] || "#64748b";
 
       const dateRows = [
-        { label: "Sown",      date: p.sowDate,   field: "sowDate"   },
-        { label: "Potted on", date: p.potOnDate,  field: "potOnDate" },
-        { label: "Last fed",  date: p.lastFed,    field: "lastFed"   },
+        { label: "Sown",      date: p.sowDate,  field: "sowDate"   },
+        { label: "Potted on", date: p.potOnDate, field: "potOnDate" },
+        { label: "Last fed",  date: p.lastFed,   field: "lastFed"   },
       ].map(item => `
         <div class="date-row">
           <span class="date-label">${item.label}</span>
@@ -560,6 +794,59 @@
     // ── Events ─────────────────────────────────────────────────────────────
     function attachEvents() {
       if (state.view === "home") {
+
+        document.getElementById("toggle-storage")?.addEventListener("click", () => {
+          state.storageOpen = !state.storageOpen;
+          state.snapshotName = "";
+          render();
+        });
+
+        // Storage panel events
+        if (state.storageOpen) {
+          document.getElementById("snap-name")?.addEventListener("input", e => {
+            state.snapshotName = e.target.value;
+          });
+
+          document.getElementById("do-save-snap")?.addEventListener("click", () => {
+            const name = document.getElementById("snap-name")?.value?.trim();
+            if (!name) return;
+            saveSnapshot(name);
+            state.snapshotName = "";
+            render();
+          });
+
+          document.getElementById("snap-name")?.addEventListener("keydown", e => {
+            if (e.key === "Enter") document.getElementById("do-save-snap")?.click();
+          });
+
+          document.querySelectorAll("[data-load-snap]").forEach(btn => {
+            btn.addEventListener("click", () => loadSnapshot(btn.dataset.loadSnap));
+          });
+
+          document.querySelectorAll("[data-del-snap]").forEach(btn => {
+            btn.addEventListener("click", () => {
+              deleteSnapshot(btn.dataset.delSnap);
+            });
+          });
+
+          document.getElementById("import-text")?.addEventListener("input", e => {
+            state.importText = e.target.value;
+          });
+
+          document.getElementById("do-import")?.addEventListener("click", () => {
+            importFromText(document.getElementById("import-text")?.value || "");
+          });
+        }
+
+        // Delete plant buttons
+        document.querySelectorAll(".delete-plant-btn").forEach(btn => {
+          btn.addEventListener("click", e => {
+            e.stopPropagation();
+            deletePlant(parseInt(btn.dataset.delPlant));
+          });
+        });
+
+        // Plant cards
         document.querySelectorAll(".plant-card").forEach(card => {
           card.addEventListener("click", e => {
             if (e.target.closest(".quick-actions")) return;
@@ -577,9 +864,9 @@
             const plantId = parseInt(btn.dataset.plant);
             const today   = todayStr();
 
-            if (type === "sow")   { updatePlant(plantId, { sowDate: today });   logEvent(plantId, "sow",      formatDate(today)); }
-            if (type === "poton") { updatePlant(plantId, { potOnDate: today }); logEvent(plantId, "potted on", formatDate(today)); }
-            if (type === "fed")   { updatePlant(plantId, { lastFed: today });   logEvent(plantId, "fed",      formatDate(today)); }
+            if (type === "sow")   { updatePlant(plantId, { sowDate: today });   logEvent(plantId, "sow",       formatDate(today)); }
+            if (type === "poton") { updatePlant(plantId, { potOnDate: today }); logEvent(plantId, "potted on",  formatDate(today)); }
+            if (type === "fed")   { updatePlant(plantId, { lastFed: today });   logEvent(plantId, "fed",       formatDate(today)); }
             if (type === "move")  {
               state.selectedPlantId = plantId;
               state.currentNote = "";
@@ -647,6 +934,7 @@
           render();
         });
       }
+
     }
 
     function confirmAddPlant() {
