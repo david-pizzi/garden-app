@@ -448,13 +448,13 @@
 
   <script>
     const INITIAL_PLANTS = [
-      { id: 1, name: "Dragon Egg Cucumber", variety: "Dragon Egg", sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
-      { id: 2, name: "Melba Melon",          variety: "Melba",        sowDate: null, potOnDate: null, lastFed: null, location: "greenhouse",        events: [] },
-      { id: 3, name: "Cosmic Fusion Tomato", variety: "Cosmic Fusion",sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
-      { id: 4, name: "Black Cherry Tomato",  variety: "Black Cherry", sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
-      { id: 5, name: "Habanada Pepper",      variety: "Habanada",     sowDate: null, potOnDate: null, lastFed: null, location: "greenhouse",        events: [] },
-      { id: 6, name: "Strawflower",          variety: "Mixed",        sowDate: null, potOnDate: null, lastFed: null, location: "indoor (grow light)", events: [] },
-      { id: 7, name: "Leek",                 variety: "Direct sown",  sowDate: null, potOnDate: null, lastFed: null, location: "greenhouse",        events: [] },
+      { id: 1, name: "Dragon Egg Cucumber", variety: "Dragon Egg", sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [] },
+      { id: 2, name: "Melba Melon",          variety: "Melba",        sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",        events: [] },
+      { id: 3, name: "Cosmic Fusion Tomato", variety: "Cosmic Fusion",sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [] },
+      { id: 4, name: "Black Cherry Tomato",  variety: "Black Cherry", sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [] },
+      { id: 5, name: "Habanada Pepper",      variety: "Habanada",     sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",        events: [] },
+      { id: 6, name: "Strawflower",          variety: "Mixed",        sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [] },
+      { id: 7, name: "Leek",                 variety: "Direct sown",  sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",        events: [] },
     ];
 
     const LOCATIONS = ["indoor (grow light)", "greenhouse", "raised bed", "hardening off"];
@@ -512,6 +512,14 @@
 
     function todayStr() {
       return new Date().toISOString().split("T")[0];
+    }
+
+    function feedStatus(plant) {
+      if (!plant.feedEvery || !plant.lastFed) return null;
+      const daysUntil = plant.feedEvery - daysSince(plant.lastFed);
+      const next = new Date(plant.lastFed);
+      next.setDate(next.getDate() + plant.feedEvery);
+      return { daysUntil, nextDate: next.toISOString().split("T")[0] };
     }
 
     function shortAgo(dateStr) {
@@ -655,22 +663,37 @@
         return n > 0 ? `<div class="summary-chip">${icon} ${n}</div>` : "";
       }).join("");
 
+      const overdueCount = state.plants.filter(p => { const fs = feedStatus(p); return fs && fs.daysUntil <= 0; }).length;
+      const overdueChip  = overdueCount > 0
+        ? `<div class="summary-chip" style="background:#fff3f0;border-color:#fcc;color:#cc4a20;">⚠️ ${overdueCount} to feed</div>`
+        : "";
+
       const cards = state.plants.map(plant => {
         const sowDays = daysSince(plant.sowDate);
-        const fedDays = daysSince(plant.lastFed);
-        const overdue = fedDays !== null && fedDays > 10;
+        const fs      = feedStatus(plant);
+        const overdue = fs && fs.daysUntil <= 0;
         const color   = LOCATION_COLORS[plant.location] || "#64748b";
+
+        const overdueLabel = fs && fs.daysUntil < 0  ? `Feed ${Math.abs(fs.daysUntil)}d overdue`
+                           : fs && fs.daysUntil === 0 ? "Feed today" : "";
 
         const tags = [
           `<span class="tag tag-loc">${esc(plant.location)}</span>`,
           sowDays !== null ? `<span class="tag tag-day">day ${sowDays}</span>` : "",
-          overdue         ? `<span class="tag tag-due">feed due</span>`        : "",
+          overdue          ? `<span class="tag tag-due">${overdueLabel}</span>` : "",
         ].join("");
 
+        const feedPart = fs
+          ? (fs.daysUntil <= 0 ? null
+            : fs.daysUntil === 1 ? `🗓 <strong>Feed tomorrow</strong>`
+            : `🗓 Next feed in ${fs.daysUntil}d`)
+          : (plant.feedEvery && !plant.lastFed ? `🗓 Not yet fed` : null);
+
         const dateParts = [
-          plant.sowDate   ? `🌱 Sown ${formatDate(plant.sowDate)}`   : null,
-          plant.lastFed   ? `💧 Fed ${shortAgo(plant.lastFed)}`      : null,
+          plant.sowDate   ? `🌱 Sown ${formatDate(plant.sowDate)}`    : null,
+          plant.lastFed   ? `💧 Fed ${shortAgo(plant.lastFed)}`       : null,
           plant.potOnDate ? `🪴 Potted ${formatDate(plant.potOnDate)}` : null,
+          feedPart,
         ].filter(Boolean);
         const datesRow = dateParts.length > 0
           ? `<div class="plant-dates">${dateParts.map(d => `<span>${d}</span>`).join("")}</div>`
@@ -686,7 +709,7 @@
         ).join("");
 
         return `
-          <div class="plant-card" data-open="${plant.id}">
+          <div class="plant-card" data-open="${plant.id}" style="${overdue ? "background:#fff5f3;border-color:#e8856a;border-width:2px;" : ""}">
             <div class="plant-card-main">
               <div class="location-icon" style="background:${color}22;">${LOCATION_ICONS[plant.location] || "🌱"}</div>
               <div style="flex:1;min-width:0;">
@@ -725,7 +748,7 @@
         </div>
         <div class="date-line">${today}</div>
         ${state.storageOpen ? renderStoragePanel() : ""}
-        <div class="summary-strip">${chips}</div>
+        <div class="summary-strip">${chips}${overdueChip}</div>
         ${cards}
         ${addSection}`;
     }
@@ -745,25 +768,43 @@
         <div class="date-row">
           <span class="date-label">${item.label}</span>
           <div style="display:flex;align-items:center;">
-            ${item.date ? `<span class="date-value">${formatDate(item.date)}</span>` : ""}
             <input type="date" class="date-input" data-field="${item.field}" value="${item.date || ""}" max="${todayStr()}">
           </div>
-        </div>`).join("");
+        </div>`).join("") + `
+        <div class="date-row">
+          <span class="date-label">Feed every</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="number" id="feed-every-input" min="1" max="365"
+              value="${p.feedEvery || ""}" placeholder="—"
+              style="width:56px;text-align:center;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
+            <span style="font-size:12px;color:#888;font-family:sans-serif;">days</span>
+          </div>
+        </div>
+        ${(() => {
+          const fs = feedStatus(p);
+          if (!fs) return "";
+          const label = fs.daysUntil < 0  ? `${Math.abs(fs.daysUntil)}d overdue`
+                      : fs.daysUntil === 0 ? "today"
+                      : fs.daysUntil === 1 ? `tomorrow (${formatDate(fs.nextDate)})`
+                      : `${formatDate(fs.nextDate)} — in ${fs.daysUntil}d`;
+          const col = fs.daysUntil <= 0 ? "#cc4a20" : fs.daysUntil <= 2 ? "#b45309" : "#3a6a3a";
+          return `<div class="date-row" style="border-bottom:none;">
+            <span class="date-label" style="color:#aaa;">Next feed</span>
+            <span style="font-size:12px;font-family:sans-serif;font-weight:600;color:${col};">${label}</span>
+          </div>`;
+        })()}`;
 
       const locOptions = LOCATIONS.map(loc =>
         `<option value="${esc(loc)}"${p.location === loc ? " selected" : ""}>${LOCATION_ICONS[loc]} ${esc(loc)}</option>`
       ).join("");
 
-      const history = p.events && p.events.length > 0 ? `
+      const notes = p.events && p.events.filter(e => e.type === "note").length > 0 ? `
         <div class="section-card">
-          <div class="section-label">History</div>
-          ${p.events.map(ev => `
+          <div class="section-label">Notes</div>
+          ${p.events.filter(e => e.type === "note").map(ev => `
             <div class="event-row">
               <div class="event-date">${formatDate(ev.date)}</div>
-              <div>
-                <span class="event-type">${esc(ev.type)}</span>
-                ${ev.detail ? `<span class="event-detail">${esc(ev.detail)}</span>` : ""}
-              </div>
+              <div class="event-detail">${esc(ev.detail)}</div>
             </div>`).join("")}
         </div>` : "";
 
@@ -791,7 +832,7 @@
           <button class="save-note-btn" id="save-note">Save note</button>
         </div>
 
-        ${history}`;
+        ${notes}`;
     }
 
     // ── Events ─────────────────────────────────────────────────────────────
@@ -874,9 +915,9 @@
             const plantId = parseInt(btn.dataset.plant);
             const today   = todayStr();
 
-            if (type === "sow")   { updatePlant(plantId, { sowDate: today });   logEvent(plantId, "sow",       formatDate(today)); }
-            if (type === "poton") { updatePlant(plantId, { potOnDate: today }); logEvent(plantId, "potted on",  formatDate(today)); }
-            if (type === "fed")   { updatePlant(plantId, { lastFed: today });   logEvent(plantId, "fed",       formatDate(today)); }
+            if (type === "sow")   { updatePlant(plantId, { sowDate: today }); }
+            if (type === "poton") { updatePlant(plantId, { potOnDate: today }); }
+            if (type === "fed")   { updatePlant(plantId, { lastFed: today }); }
             if (type === "move")  {
               state.selectedPlantId = plantId;
               state.currentNote = "";
@@ -917,17 +958,21 @@
           input.addEventListener("change", () => {
             if (!input.value) return;
             const field = input.dataset.field;
-            const label = { sowDate: "sow", potOnDate: "potted on", lastFed: "fed" }[field] || field;
             updatePlant(state.selectedPlantId, { [field]: input.value });
-            logEvent(state.selectedPlantId, label, formatDate(input.value));
             state.currentNote = document.getElementById("note-input")?.value || "";
             render();
           });
         });
 
+        document.getElementById("feed-every-input")?.addEventListener("change", e => {
+          const val = parseInt(e.target.value);
+          updatePlant(state.selectedPlantId, { feedEvery: val > 0 ? val : null });
+          state.currentNote = document.getElementById("note-input")?.value || "";
+          render();
+        });
+
         document.getElementById("loc-select")?.addEventListener("change", e => {
           updatePlant(state.selectedPlantId, { location: e.target.value });
-          logEvent(state.selectedPlantId, "moved", `→ ${e.target.value}`);
           state.currentNote = document.getElementById("note-input")?.value || "";
           render();
         });
@@ -952,7 +997,7 @@
       if (!name) return;
       state.plants.push({
         id: Date.now(), name, variety: "", sowDate: null,
-        potOnDate: null, lastFed: null,
+        potOnDate: null, lastFed: null, feedEvery: null,
         location: "indoor (grow light)", events: [],
       });
       savePlants();
