@@ -448,13 +448,13 @@
 
   <script>
     const INITIAL_PLANTS = [
-      { id: 1, name: "Dragon Egg Cucumber", variety: "Dragon Egg", sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [] },
-      { id: 2, name: "Melba Melon",          variety: "Melba",        sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",        events: [] },
-      { id: 3, name: "Cosmic Fusion Tomato", variety: "Cosmic Fusion",sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [] },
-      { id: 4, name: "Black Cherry Tomato",  variety: "Black Cherry", sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [] },
-      { id: 5, name: "Habanada Pepper",      variety: "Habanada",     sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",        events: [] },
-      { id: 6, name: "Strawflower",          variety: "Mixed",        sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [] },
-      { id: 7, name: "Leek",                 variety: "Direct sown",  sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",        events: [] },
+      { id: 1, name: "Dragon Egg Cucumber", variety: "Dragon Egg",    sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null },
+      { id: 2, name: "Melba Melon",          variety: "Melba",        sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",           events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null },
+      { id: 3, name: "Cosmic Fusion Tomato", variety: "Cosmic Fusion",sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null },
+      { id: 4, name: "Black Cherry Tomato",  variety: "Black Cherry", sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null },
+      { id: 5, name: "Habanada Pepper",      variety: "Habanada",     sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",           events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null },
+      { id: 6, name: "Strawflower",          variety: "Mixed",        sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null },
+      { id: 7, name: "Leek",                 variety: "Direct sown",  sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",           events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null },
     ];
 
     const LOCATIONS = ["indoor (grow light)", "greenhouse", "raised bed", "hardening off"];
@@ -520,6 +520,13 @@
       const next = new Date(plant.lastFed);
       next.setDate(next.getDate() + plant.feedEvery);
       return { daysUntil, nextDate: next.toISOString().split("T")[0] };
+    }
+
+    function estimatedGerminationDate(plant) {
+      if (!plant.sowDate || !plant.germinationDays) return null;
+      const d = new Date(plant.sowDate);
+      d.setDate(d.getDate() + plant.germinationDays);
+      return d.toISOString().split("T")[0];
     }
 
     function shortAgo(dateStr) {
@@ -663,9 +670,20 @@
         return n > 0 ? `<div class="summary-chip">${icon} ${n}</div>` : "";
       }).join("");
 
+      const sownCount       = state.plants.filter(p => p.sowDate).length;
+      const germinatedCount = state.plants.filter(p => p.germinationDate).length;
+
       const overdueCount = state.plants.filter(p => { const fs = feedStatus(p); return fs && fs.daysUntil <= 0; }).length;
       const overdueChip  = overdueCount > 0
         ? `<div class="summary-chip" style="background:#fff3f0;border-color:#fcc;color:#cc4a20;">⚠️ ${overdueCount} to feed</div>`
+        : "";
+
+      const germOverdueCount = state.plants.filter(p => {
+        const est = estimatedGerminationDate(p);
+        return est && est < todayStr() && !p.germinationDate;
+      }).length;
+      const germOverdueChip = germOverdueCount > 0
+        ? `<div class="summary-chip" style="background:#fffbf0;border-color:#f0d080;color:#b45309;">🌿 ${germOverdueCount} to germinate</div>`
         : "";
 
       const cards = state.plants.map(plant => {
@@ -674,13 +692,24 @@
         const overdue = fs && fs.daysUntil <= 0;
         const color   = LOCATION_COLORS[plant.location] || "#64748b";
 
+        const estGermCard  = estimatedGerminationDate(plant);
+        const germOverdue  = !!(estGermCard && estGermCard < todayStr() && !plant.germinationDate);
+        const germDaysOver = germOverdue ? Math.floor((Date.now() - new Date(estGermCard).getTime()) / 86400000) : 0;
+
         const overdueLabel = fs && fs.daysUntil < 0  ? `Feed ${Math.abs(fs.daysUntil)}d overdue`
                            : fs && fs.daysUntil === 0 ? "Feed today" : "";
+        const germLabel    = germDaysOver === 0 ? "Germination today" : `Germination ${germDaysOver}d overdue`;
+
+        const qtyLabel = plant.quantity && plant.germinatedQuantity && plant.germinatedQuantity !== plant.quantity
+          ? `×${plant.germinatedQuantity}/${plant.quantity}`
+          : plant.quantity ? `×${plant.quantity}` : null;
 
         const tags = [
           `<span class="tag tag-loc">${esc(plant.location)}</span>`,
           sowDays !== null ? `<span class="tag tag-day">day ${sowDays}</span>` : "",
+          qtyLabel         ? `<span class="tag" style="background:#f5f0ff;color:#6b46c1;">${qtyLabel}</span>` : "",
           overdue          ? `<span class="tag tag-due">${overdueLabel}</span>` : "",
+          germOverdue      ? `<span class="tag" style="background:#fff8e0;color:#b45309;font-weight:600;">${germLabel}</span>` : "",
         ].join("");
 
         const feedPart = fs
@@ -693,6 +722,8 @@
           plant.sowDate   ? `🌱 Sown ${formatDate(plant.sowDate)}`    : null,
           plant.lastFed   ? `💧 Fed ${shortAgo(plant.lastFed)}`       : null,
           plant.potOnDate ? `🪴 Potted ${formatDate(plant.potOnDate)}` : null,
+          plant.germinationDate ? `🌿 Germinated ${formatDate(plant.germinationDate)}` :
+          estGermCard           ? `🌿 Germinates ~${formatDate(estGermCard)}` : null,
           feedPart,
         ].filter(Boolean);
         const datesRow = dateParts.length > 0
@@ -709,7 +740,10 @@
         ).join("");
 
         return `
-          <div class="plant-card" data-open="${plant.id}" style="${overdue ? "background:#fff5f3;border-color:#e8856a;border-width:2px;" : ""}">
+          <div class="plant-card" data-open="${plant.id}" style="${
+            overdue     ? "background:#fff5f3;border-color:#e8856a;border-width:2px;" :
+            germOverdue ? "background:#fffbf0;border-color:#e8c85a;border-width:2px;" : ""
+          }">
             <div class="plant-card-main">
               <div class="location-icon" style="background:${color}22;">${LOCATION_ICONS[plant.location] || "🌱"}</div>
               <div style="flex:1;min-width:0;">
@@ -748,7 +782,12 @@
         </div>
         <div class="date-line">${today}</div>
         ${state.storageOpen ? renderStoragePanel() : ""}
-        <div class="summary-strip">${chips}${overdueChip}</div>
+        <div class="summary-strip">
+          ${chips}
+          ${sownCount > 0       ? `<div class="summary-chip">🌱 ${sownCount} sown</div>` : ""}
+          ${germinatedCount > 0 ? `<div class="summary-chip">🪴 ${germinatedCount} germinated</div>` : ""}
+          ${overdueChip}${germOverdueChip}
+        </div>
         ${cards}
         ${addSection}`;
     }
@@ -757,46 +796,43 @@
       const p = state.plants.find(pl => pl.id === state.selectedPlantId);
       if (!p) return "";
 
-      const sowDays = daysSince(p.sowDate);
-      const color   = LOCATION_COLORS[p.location] || "#64748b";
-
-      const dateRows = [
-        { label: "Sown",      date: p.sowDate,  field: "sowDate"   },
-        { label: "Potted on", date: p.potOnDate, field: "potOnDate" },
-        { label: "Last fed",  date: p.lastFed,   field: "lastFed"   },
-      ].map(item => `
-        <div class="date-row">
-          <span class="date-label">${item.label}</span>
-          <div style="display:flex;align-items:center;">
-            <input type="date" class="date-input" data-field="${item.field}" value="${item.date || ""}" max="${todayStr()}">
-          </div>
-        </div>`).join("") + `
-        <div class="date-row">
-          <span class="date-label">Feed every</span>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <input type="number" id="feed-every-input" min="1" max="365"
-              value="${p.feedEvery || ""}" placeholder="—"
-              style="width:56px;text-align:center;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
-            <span style="font-size:12px;color:#888;font-family:sans-serif;">days</span>
-          </div>
-        </div>
-        ${(() => {
-          const fs = feedStatus(p);
-          if (!fs) return "";
-          const label = fs.daysUntil < 0  ? `${Math.abs(fs.daysUntil)}d overdue`
-                      : fs.daysUntil === 0 ? "today"
-                      : fs.daysUntil === 1 ? `tomorrow (${formatDate(fs.nextDate)})`
-                      : `${formatDate(fs.nextDate)} — in ${fs.daysUntil}d`;
-          const col = fs.daysUntil <= 0 ? "#cc4a20" : fs.daysUntil <= 2 ? "#b45309" : "#3a6a3a";
-          return `<div class="date-row" style="border-bottom:none;">
-            <span class="date-label" style="color:#aaa;">Next feed</span>
-            <span style="font-size:12px;font-family:sans-serif;font-weight:600;color:${col};">${label}</span>
-          </div>`;
-        })()}`;
+      const sowDays  = daysSince(p.sowDate);
+      const color    = LOCATION_COLORS[p.location] || "#64748b";
+      const estGerm  = estimatedGerminationDate(p);
 
       const locOptions = LOCATIONS.map(loc =>
         `<option value="${esc(loc)}"${p.location === loc ? " selected" : ""}>${LOCATION_ICONS[loc]} ${esc(loc)}</option>`
       ).join("");
+
+      const numInput = (id, val, opts = {}) => `
+        <input type="number" id="${id}" min="${opts.min ?? 1}" max="${opts.max ?? 9999}"
+          value="${val || ""}" placeholder="—"
+          style="width:${opts.width ?? "64px"};text-align:center;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">`;
+
+      const dateInput = (field, val) => `
+        <input type="date" class="date-input" data-field="${field}" value="${val || ""}" max="${todayStr()}">`;
+
+      const estGermDisplay = (() => {
+        if (!estGerm) return `<span style="font-size:12px;font-family:sans-serif;color:#ccc;">set sow date &amp; period</span>`;
+        const daysLeft = Math.ceil((new Date(estGerm) - new Date()) / 86400000);
+        const col    = daysLeft < 0 ? "#8a9a8a" : daysLeft === 0 ? "#059669" : "#2d4a2d";
+        const suffix = daysLeft < 0 ? ` (${Math.abs(daysLeft)}d ago)` : daysLeft === 0 ? " (today!)" : ` (in ${daysLeft}d)`;
+        return `<span style="font-size:12px;font-family:sans-serif;font-weight:600;color:${col};">${formatDate(estGerm)}${suffix}</span>`;
+      })();
+
+      const nextFeedDisplay = (() => {
+        const fs = feedStatus(p);
+        if (!fs) return "";
+        const label = fs.daysUntil < 0  ? `${Math.abs(fs.daysUntil)}d overdue`
+                    : fs.daysUntil === 0 ? "today"
+                    : fs.daysUntil === 1 ? `tomorrow (${formatDate(fs.nextDate)})`
+                    : `${formatDate(fs.nextDate)} — in ${fs.daysUntil}d`;
+        const col = fs.daysUntil <= 0 ? "#cc4a20" : fs.daysUntil <= 2 ? "#b45309" : "#3a6a3a";
+        return `<div class="date-row">
+          <span class="date-label" style="color:#aaa;">Next feed</span>
+          <span style="font-size:12px;font-family:sans-serif;font-weight:600;color:${col};">${label}</span>
+        </div>`;
+      })();
 
       const notes = p.events && p.events.filter(e => e.type === "note").length > 0 ? `
         <div class="section-card">
@@ -817,12 +853,73 @@
         </div>
 
         <div class="section-card">
-          <div class="section-label">Key dates</div>
-          ${dateRows}
+          <div class="section-label">Sowing</div>
+          <div class="date-row">
+            <span class="date-label">Sow date</span>
+            ${dateInput("sowDate", p.sowDate)}
+          </div>
           <div class="date-row" style="border-bottom:none;">
+            <span class="date-label">Quantity sown</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${numInput("quantity-input", p.quantity)}
+              <span style="font-size:12px;color:#888;font-family:sans-serif;">plants</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-label">Germination</div>
+          <div class="date-row">
+            <span class="date-label">Period</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${numInput("germ-days-input", p.germinationDays, { width: "56px", max: 365 })}
+              <span style="font-size:12px;color:#888;font-family:sans-serif;">days</span>
+            </div>
+          </div>
+          <div class="date-row">
+            <span class="date-label">Temperature</span>
+            <input type="text" id="germ-temp-input" value="${esc(p.germinationTemp || "")}" placeholder="e.g. 20–25°C"
+              style="width:110px;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
+          </div>
+          <div class="date-row">
+            <span class="date-label" style="color:#aaa;">Est. germination</span>
+            ${estGermDisplay}
+          </div>
+          <div class="date-row">
+            <span class="date-label">Germination date</span>
+            ${dateInput("germinationDate", p.germinationDate)}
+          </div>
+          <div class="date-row" style="border-bottom:none;">
+            <span class="date-label">Quantity germinated</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${numInput("germinated-qty-input", p.germinatedQuantity)}
+              <span style="font-size:12px;color:#888;font-family:sans-serif;">plants</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-label">Care</div>
+          <div class="date-row">
             <span class="date-label">Location</span>
             <select class="location-select" id="loc-select">${locOptions}</select>
           </div>
+          <div class="date-row">
+            <span class="date-label">Potted on</span>
+            ${dateInput("potOnDate", p.potOnDate)}
+          </div>
+          <div class="date-row">
+            <span class="date-label">Last fed</span>
+            ${dateInput("lastFed", p.lastFed)}
+          </div>
+          <div class="date-row">
+            <span class="date-label">Feed every</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${numInput("feed-every-input", p.feedEvery, { width: "56px", max: 365 })}
+              <span style="font-size:12px;color:#888;font-family:sans-serif;">days</span>
+            </div>
+          </div>
+          ${nextFeedDisplay}
         </div>
 
         <div class="section-card">
@@ -971,6 +1068,34 @@
           render();
         });
 
+        document.getElementById("quantity-input")?.addEventListener("change", e => {
+          const val = parseInt(e.target.value);
+          updatePlant(state.selectedPlantId, { quantity: val > 0 ? val : null });
+          state.currentNote = document.getElementById("note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("germ-days-input")?.addEventListener("change", e => {
+          const val = parseInt(e.target.value);
+          updatePlant(state.selectedPlantId, { germinationDays: val > 0 ? val : null });
+          state.currentNote = document.getElementById("note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("germ-temp-input")?.addEventListener("change", e => {
+          const val = e.target.value.trim();
+          updatePlant(state.selectedPlantId, { germinationTemp: val || null });
+          state.currentNote = document.getElementById("note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("germinated-qty-input")?.addEventListener("change", e => {
+          const val = parseInt(e.target.value);
+          updatePlant(state.selectedPlantId, { germinatedQuantity: val > 0 ? val : null });
+          state.currentNote = document.getElementById("note-input")?.value || "";
+          render();
+        });
+
         document.getElementById("loc-select")?.addEventListener("change", e => {
           updatePlant(state.selectedPlantId, { location: e.target.value });
           state.currentNote = document.getElementById("note-input")?.value || "";
@@ -999,6 +1124,8 @@
         id: Date.now(), name, variety: "", sowDate: null,
         potOnDate: null, lastFed: null, feedEvery: null,
         location: "indoor (grow light)", events: [],
+        quantity: null, germinationDays: null, germinationTemp: null,
+        germinationDate: null, germinatedQuantity: null,
       });
       savePlants();
       state.addingPlant = false;
