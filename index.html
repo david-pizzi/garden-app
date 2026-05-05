@@ -731,8 +731,9 @@
           : "";
 
         const btns = [
-          { label: plant.sowDate   ? "✓ Sown"   : "+ Sow",    type: "sow",   done: !!plant.sowDate },
-          { label: plant.potOnDate ? "✓ Potted" : "+ Pot on", type: "poton", done: !!plant.potOnDate },
+          { label: plant.sowDate        ? "✓ Sown"       : "+ Sow",      type: "sow",   done: !!plant.sowDate },
+          { label: plant.germinationDate ? "✓ Germinated" : "🌿 Germinate", type: "germ", done: !!plant.germinationDate },
+          { label: plant.potOnDate      ? "✓ Potted"     : "+ Pot on",   type: "poton", done: !!plant.potOnDate },
           { label: "💧 Fed",  type: "fed",  done: false },
           { label: "📍 Move", type: "move", done: false },
         ].map(b =>
@@ -784,8 +785,8 @@
         ${state.storageOpen ? renderStoragePanel() : ""}
         <div class="summary-strip">
           ${chips}
-          ${sownCount > 0       ? `<div class="summary-chip">🌱 ${sownCount} sown</div>` : ""}
-          ${germinatedCount > 0 ? `<div class="summary-chip">🪴 ${germinatedCount} germinated</div>` : ""}
+          ${sownCount > 0       ? `<div class="summary-chip">🌱 ${sownCount}</div>` : ""}
+          ${germinatedCount > 0 ? `<div class="summary-chip">🪴 ${germinatedCount}</div>` : ""}
           ${overdueChip}${germOverdueChip}
         </div>
         ${cards}
@@ -1013,6 +1014,7 @@
             const today   = todayStr();
 
             if (type === "sow")   { updatePlant(plantId, { sowDate: today }); }
+            if (type === "germ")  { updatePlant(plantId, { germinationDate: today }); }
             if (type === "poton") { updatePlant(plantId, { potOnDate: today }); }
             if (type === "fed")   { updatePlant(plantId, { lastFed: today }); }
             if (type === "move")  {
