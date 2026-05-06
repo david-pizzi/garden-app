@@ -759,7 +759,8 @@
       const tomorrowItems = allEvents.filter(e => e.daysUntil === 1);
       const weekItems     = allEvents.filter(e => e.daysUntil >= 2 && e.daysUntil <= 7).sort((a, b) => a.daysUntil - b.daysUntil);
 
-      if (!overdue.length && !todayItems.length && !tomorrowItems.length && !weekItems.length) return "";
+      if (!overdue.length && !todayItems.length && !tomorrowItems.length && !weekItems.length)
+        return `<div style="font-family:sans-serif;font-size:13px;color:#b0beb0;padding:12px 2px 20px;text-align:center;">All clear — nothing overdue or due this week 🌱</div>`;
 
       const renderItem = e => {
         const locIcon = LOCATION_ICONS[e.plant.location] || "🌱";
