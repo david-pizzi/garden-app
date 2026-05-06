@@ -85,6 +85,78 @@
       border: 1px solid #ede8e0;
     }
 
+    /* ── Schedule Overview ── */
+    .schedule-overview {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ov-section {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #ede8e0;
+      border-left: 3px solid #ccc;
+      overflow: hidden;
+    }
+
+    .ov-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      background: #fafaf8;
+      border-bottom: 1px solid #f4f0ea;
+    }
+
+    .ov-section-label {
+      font-family: sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #8a9a8a;
+    }
+
+    .ov-badge {
+      font-family: sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f0ece6;
+      color: #7a8a7a;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+
+    .page-section-label {
+      font-family: sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #b0beb0;
+      margin-bottom: 10px;
+    }
+
+    .ov-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f9f6f2;
+      cursor: pointer;
+      font-family: sans-serif;
+    }
+
+    .ov-item:last-child { border-bottom: none; }
+    .ov-item:active { background: #f4f0ea; }
+
+    .ov-loc { font-size: 15px; flex-shrink: 0; }
+    .ov-name { flex: 1; color: #2d4a2d; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ov-action { color: #6a7a6a; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+    .ov-date { color: #aabcaa; font-size: 11px; white-space: nowrap; flex-shrink: 0; margin-left: 4px; }
+
     /* ── Storage panel ── */
     .storage-panel {
       background: #fff;
@@ -662,6 +734,75 @@
         </div>`;
     }
 
+    function renderScheduleOverview() {
+      const today = todayStr();
+      const todayMs = new Date(today).setHours(0, 0, 0, 0);
+      const msDay = 86400000;
+
+      const allEvents = [];
+      for (const plant of state.plants) {
+        const fs = feedStatus(plant);
+        if (fs) {
+          allEvents.push({ plant, type: "feed", daysUntil: fs.daysUntil, date: fs.nextDate });
+        }
+        if (!plant.germinationDate) {
+          const est = estimatedGerminationDate(plant);
+          if (est) {
+            const daysUntil = Math.round((new Date(est).setHours(0, 0, 0, 0) - todayMs) / msDay);
+            allEvents.push({ plant, type: "germ", daysUntil, date: est });
+          }
+        }
+      }
+
+      const overdue       = allEvents.filter(e => e.daysUntil < 0).sort((a, b) => a.daysUntil - b.daysUntil);
+      const todayItems    = allEvents.filter(e => e.daysUntil === 0);
+      const tomorrowItems = allEvents.filter(e => e.daysUntil === 1);
+      const weekItems     = allEvents.filter(e => e.daysUntil >= 2 && e.daysUntil <= 7).sort((a, b) => a.daysUntil - b.daysUntil);
+
+      if (!overdue.length && !todayItems.length && !tomorrowItems.length && !weekItems.length) return "";
+
+      const renderItem = e => {
+        const locIcon = LOCATION_ICONS[e.plant.location] || "🌱";
+        let action;
+        if (e.type === "feed") {
+          action = e.daysUntil < 0  ? `💧 Feed ${Math.abs(e.daysUntil)}d overdue`
+                 : e.daysUntil === 0 ? `💧 Feed today`
+                 : e.daysUntil === 1 ? `💧 Feed tomorrow`
+                 : `💧 Feed in ${e.daysUntil}d`;
+        } else {
+          action = e.daysUntil < 0  ? `🌿 Germination ${Math.abs(e.daysUntil)}d overdue`
+                 : e.daysUntil === 0 ? `🌿 Germination today`
+                 : e.daysUntil === 1 ? `🌿 Germination tomorrow`
+                 : `🌿 Germinates in ${e.daysUntil}d`;
+        }
+        const dateChip = e.daysUntil >= 2 ? `<span class="ov-date">${formatDate(e.date)}</span>` : "";
+        return `<div class="ov-item" data-open="${e.plant.id}">
+          <span class="ov-loc">${locIcon}</span>
+          <span class="ov-name">${esc(e.plant.name)}</span>
+          <span class="ov-action">${action}</span>
+          ${dateChip}
+        </div>`;
+      };
+
+      const section = (label, items, borderColor) => {
+        if (!items.length) return "";
+        return `<div class="ov-section" style="border-left-color:${borderColor};">
+          <div class="ov-section-header">
+            <span class="ov-section-label">${label}</span>
+            <span class="ov-badge">${items.length}</span>
+          </div>
+          ${items.map(renderItem).join("")}
+        </div>`;
+      };
+
+      return `<div class="schedule-overview">
+        ${section("Overdue", overdue, "#e8856a")}
+        ${section("Today", todayItems, "#059669")}
+        ${section("Tomorrow", tomorrowItems, "#3b82f6")}
+        ${section("This week", weekItems, "#8ab58a")}
+      </div>`;
+    }
+
     function renderHome() {
       const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
@@ -673,18 +814,6 @@
       const sownCount       = state.plants.filter(p => p.sowDate).length;
       const germinatedCount = state.plants.filter(p => p.germinationDate).length;
 
-      const overdueCount = state.plants.filter(p => { const fs = feedStatus(p); return fs && fs.daysUntil <= 0; }).length;
-      const overdueChip  = overdueCount > 0
-        ? `<div class="summary-chip" style="background:#fff3f0;border-color:#fcc;color:#cc4a20;">⚠️ ${overdueCount} to feed</div>`
-        : "";
-
-      const germOverdueCount = state.plants.filter(p => {
-        const est = estimatedGerminationDate(p);
-        return est && est < todayStr() && !p.germinationDate;
-      }).length;
-      const germOverdueChip = germOverdueCount > 0
-        ? `<div class="summary-chip" style="background:#fffbf0;border-color:#f0d080;color:#b45309;">🌿 ${germOverdueCount} to germinate</div>`
-        : "";
 
       const cards = state.plants.map(plant => {
         const sowDays = daysSince(plant.sowDate);
@@ -787,8 +916,10 @@
           ${chips}
           ${sownCount > 0       ? `<div class="summary-chip">🌱 ${sownCount}</div>` : ""}
           ${germinatedCount > 0 ? `<div class="summary-chip">🪴 ${germinatedCount}</div>` : ""}
-          ${overdueChip}${germOverdueChip}
         </div>
+        <div class="page-section-label">Overview</div>
+        ${renderScheduleOverview()}
+        <div class="page-section-label">Plants</div>
         ${cards}
         ${addSection}`;
     }
@@ -992,6 +1123,16 @@
           btn.addEventListener("click", e => {
             e.stopPropagation();
             deletePlant(parseInt(btn.dataset.delPlant));
+          });
+        });
+
+        // Schedule overview items
+        document.querySelectorAll(".ov-item").forEach(item => {
+          item.addEventListener("click", () => {
+            state.selectedPlantId = parseInt(item.dataset.open);
+            state.currentNote = "";
+            state.view = "detail";
+            render();
           });
         });
 
