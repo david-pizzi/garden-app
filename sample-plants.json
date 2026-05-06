@@ -1,0 +1,243 @@
+[
+  {
+    "id": 1,
+    "name": "Chilli Habanero",
+    "variety": "Orange Habanero",
+    "location": "greenhouse",
+    "sowDate": "2026-04-10",
+    "germinationDays": 21,
+    "germinationTemp": "25–30°C",
+    "germinationDate": null,
+    "quantity": 6,
+    "germinatedQuantity": null,
+    "potOnDate": null,
+    "lastFed": "2026-04-26",
+    "feedEvery": 7,
+    "harvestDays": 150,
+    "harvestDate": null,
+    "harvestTemp": "25–30°C",
+    "events": [
+      { "date": "2026-04-10", "type": "Sown", "detail": "Sown 6 seeds in propagator" }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Tomato",
+    "variety": "San Marzano",
+    "location": "indoor (grow light)",
+    "sowDate": "2026-04-08",
+    "germinationDays": 7,
+    "germinationTemp": "20–25°C",
+    "germinationDate": "2026-04-15",
+    "quantity": 4,
+    "germinatedQuantity": 4,
+    "potOnDate": "2026-04-22",
+    "lastFed": "2026-04-29",
+    "feedEvery": 7,
+    "harvestDays": 120,
+    "harvestDate": null,
+    "harvestTemp": "20–26°C",
+    "events": [
+      { "date": "2026-04-08", "type": "Sown", "detail": "Sown under grow light" },
+      { "date": "2026-04-15", "type": "Germinated", "detail": "All 4 seeds germinated" },
+      { "date": "2026-04-22", "type": "Potted", "detail": "Potted on to 9cm pots" }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Basil",
+    "variety": "Sweet Genovese",
+    "location": "indoor (grow light)",
+    "sowDate": "2026-04-22",
+    "germinationDays": 14,
+    "germinationTemp": "20–25°C",
+    "germinationDate": null,
+    "quantity": 8,
+    "germinatedQuantity": null,
+    "potOnDate": null,
+    "lastFed": null,
+    "feedEvery": null,
+    "harvestDays": 70,
+    "harvestDate": null,
+    "harvestTemp": "18–25°C",
+    "events": [
+      { "date": "2026-04-22", "type": "Sown", "detail": "Sown in seed tray" }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Cucumber",
+    "variety": "Marketmore",
+    "location": "greenhouse",
+    "sowDate": "2026-04-15",
+    "germinationDays": 10,
+    "germinationTemp": "20–25°C",
+    "germinationDate": "2026-04-25",
+    "quantity": 3,
+    "germinatedQuantity": 3,
+    "potOnDate": null,
+    "lastFed": "2026-04-30",
+    "feedEvery": 7,
+    "harvestDays": 65,
+    "harvestDate": null,
+    "harvestTemp": "18–24°C",
+    "events": [
+      { "date": "2026-04-15", "type": "Sown", "detail": "" },
+      { "date": "2026-04-25", "type": "Germinated", "detail": "3 out of 3 germinated" }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Pepper",
+    "variety": "Cayenne Long Slim",
+    "location": "hardening off",
+    "sowDate": "2026-04-23",
+    "germinationDays": 14,
+    "germinationTemp": "22–28°C",
+    "germinationDate": null,
+    "quantity": 5,
+    "germinatedQuantity": null,
+    "potOnDate": null,
+    "lastFed": null,
+    "feedEvery": null,
+    "harvestDays": 90,
+    "harvestDate": null,
+    "harvestTemp": "20–28°C",
+    "events": [
+      { "date": "2026-04-23", "type": "Sown", "detail": "Sown in heated propagator" }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Courgette",
+    "variety": "Black Beauty",
+    "location": "raised bed",
+    "sowDate": "2026-04-20",
+    "germinationDays": 7,
+    "germinationTemp": "18–25°C",
+    "germinationDate": "2026-04-28",
+    "quantity": 2,
+    "germinatedQuantity": 2,
+    "potOnDate": "2026-04-30",
+    "lastFed": "2026-05-02",
+    "feedEvery": 7,
+    "harvestDays": 60,
+    "harvestDate": null,
+    "harvestTemp": "18–24°C",
+    "events": [
+      { "date": "2026-04-20", "type": "Sown", "detail": "" },
+      { "date": "2026-04-28", "type": "Germinated", "detail": "" },
+      { "date": "2026-04-30", "type": "Potted", "detail": "Planted out in raised bed" }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Lettuce",
+    "variety": "Butterhead",
+    "location": "raised bed",
+    "sowDate": "2026-04-25",
+    "germinationDays": 16,
+    "germinationTemp": "10–20°C",
+    "germinationDate": null,
+    "quantity": 12,
+    "germinatedQuantity": null,
+    "potOnDate": null,
+    "lastFed": null,
+    "feedEvery": null,
+    "harvestDays": 65,
+    "harvestDate": null,
+    "harvestTemp": "10–20°C",
+    "events": [
+      { "date": "2026-04-25", "type": "Sown", "detail": "Direct sown in raised bed" }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Spinach",
+    "variety": "Giant Nobel",
+    "location": "raised bed",
+    "sowDate": "2026-04-05",
+    "germinationDays": 21,
+    "germinationTemp": "10–18°C",
+    "germinationDate": null,
+    "quantity": 20,
+    "germinatedQuantity": null,
+    "potOnDate": null,
+    "lastFed": null,
+    "feedEvery": null,
+    "harvestDays": 45,
+    "harvestDate": null,
+    "harvestTemp": "10–18°C",
+    "events": [
+      { "date": "2026-04-05", "type": "Sown", "detail": "Direct sown, row 1" }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Radish",
+    "variety": "Cherry Belle",
+    "location": "raised bed",
+    "sowDate": "2026-03-10",
+    "germinationDays": 6,
+    "germinationTemp": "10–20°C",
+    "germinationDate": "2026-03-16",
+    "quantity": 30,
+    "germinatedQuantity": 27,
+    "potOnDate": null,
+    "lastFed": null,
+    "feedEvery": null,
+    "harvestDays": 25,
+    "harvestDate": "2026-04-04",
+    "harvestTemp": "10–18°C",
+    "events": [
+      { "date": "2026-03-10", "type": "Sown", "detail": "Direct sown, row 2" },
+      { "date": "2026-03-16", "type": "Germinated", "detail": "27 of 30 germinated" },
+      { "date": "2026-04-04", "type": "Harvested", "detail": "Full harvest, roots firm and sweet" }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Radish",
+    "variety": "Cherry Belle",
+    "location": "raised bed",
+    "sowDate": "2026-04-13",
+    "germinationDays": 6,
+    "germinationTemp": "10–20°C",
+    "germinationDate": "2026-04-19",
+    "quantity": 30,
+    "germinatedQuantity": 28,
+    "potOnDate": null,
+    "lastFed": null,
+    "feedEvery": null,
+    "harvestDays": 25,
+    "harvestDate": null,
+    "harvestTemp": "10–18°C",
+    "events": [
+      { "date": "2026-04-13", "type": "Sown", "detail": "Direct sown, row 3" },
+      { "date": "2026-04-19", "type": "Germinated", "detail": "28 of 30 germinated" }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Spring Onion",
+    "variety": "White Lisbon",
+    "location": "raised bed",
+    "sowDate": "2026-03-01",
+    "germinationDays": 14,
+    "germinationTemp": "10–18°C",
+    "germinationDate": "2026-03-15",
+    "quantity": 40,
+    "germinatedQuantity": 38,
+    "potOnDate": null,
+    "lastFed": null,
+    "feedEvery": null,
+    "harvestDays": 60,
+    "harvestDate": "2026-04-30",
+    "harvestTemp": "10–18°C",
+    "events": [
+      { "date": "2026-03-01", "type": "Sown", "detail": "Direct sown in rows" },
+      { "date": "2026-03-15", "type": "Germinated", "detail": "Dense germination across row" },
+      { "date": "2026-04-30", "type": "Harvested", "detail": "Picked at pencil thickness, full row" }
+    ]
+  }
+]
