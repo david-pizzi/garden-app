@@ -530,17 +530,22 @@
     ];
 
     const SAMPLE_PLANTS = [
-      { id: 1,  name: "Chilli Habanero",  variety: "Orange Habanero",   location: "greenhouse",           sowDate: "2026-04-10", germinationDays: 21, germinationTemp: "25–30°C", germinationDate: null,         quantity: 6,  germinatedQuantity: null, potOnDate: null,         lastFed: "2026-04-26", feedEvery: 7,    harvestDays: 150, harvestDate: null,         harvestTemp: "25–30°C", events: [{ date: "2026-04-10", type: "Sown",       detail: "Sown 6 seeds in propagator" }] },
-      { id: 2,  name: "Tomato",           variety: "San Marzano",        location: "indoor (grow light)",  sowDate: "2026-04-08", germinationDays: 7,  germinationTemp: "20–25°C", germinationDate: "2026-04-15", quantity: 4,  germinatedQuantity: 4,    potOnDate: "2026-04-22", lastFed: "2026-04-29", feedEvery: 7,    harvestDays: 120, harvestDate: null,         harvestTemp: "20–26°C", events: [{ date: "2026-04-08", type: "Sown",       detail: "Sown under grow light" }, { date: "2026-04-15", type: "Germinated", detail: "All 4 seeds germinated" }, { date: "2026-04-22", type: "Potted", detail: "Potted on to 9cm pots" }] },
-      { id: 3,  name: "Basil",            variety: "Sweet Genovese",     location: "indoor (grow light)",  sowDate: "2026-04-22", germinationDays: 14, germinationTemp: "20–25°C", germinationDate: null,         quantity: 8,  germinatedQuantity: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 70,  harvestDate: null,         harvestTemp: "18–25°C", events: [{ date: "2026-04-22", type: "Sown",       detail: "Sown in seed tray" }] },
-      { id: 4,  name: "Cucumber",         variety: "Marketmore",         location: "greenhouse",           sowDate: "2026-04-15", germinationDays: 10, germinationTemp: "20–25°C", germinationDate: "2026-04-25", quantity: 3,  germinatedQuantity: 3,    potOnDate: null,         lastFed: "2026-04-30", feedEvery: 7,    harvestDays: 65,  harvestDate: null,         harvestTemp: "18–24°C", events: [{ date: "2026-04-15", type: "Sown",       detail: "" }, { date: "2026-04-25", type: "Germinated", detail: "3 out of 3 germinated" }] },
-      { id: 5,  name: "Pepper",           variety: "Cayenne Long Slim",  location: "hardening off",        sowDate: "2026-04-23", germinationDays: 14, germinationTemp: "22–28°C", germinationDate: null,         quantity: 5,  germinatedQuantity: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 90,  harvestDate: null,         harvestTemp: "20–28°C", events: [{ date: "2026-04-23", type: "Sown",       detail: "Sown in heated propagator" }] },
-      { id: 6,  name: "Courgette",        variety: "Black Beauty",       location: "raised bed",           sowDate: "2026-04-20", germinationDays: 7,  germinationTemp: "18–25°C", germinationDate: "2026-04-28", quantity: 2,  germinatedQuantity: 2,    potOnDate: "2026-04-30", lastFed: "2026-05-02", feedEvery: 7,    harvestDays: 60,  harvestDate: null,         harvestTemp: "18–24°C", events: [{ date: "2026-04-20", type: "Sown",       detail: "" }, { date: "2026-04-28", type: "Germinated", detail: "" }, { date: "2026-04-30", type: "Potted", detail: "Planted out in raised bed" }] },
-      { id: 7,  name: "Lettuce",          variety: "Butterhead",         location: "raised bed",           sowDate: "2026-04-25", germinationDays: 16, germinationTemp: "10–20°C", germinationDate: null,         quantity: 12, germinatedQuantity: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 65,  harvestDate: null,         harvestTemp: "10–20°C", events: [{ date: "2026-04-25", type: "Sown",       detail: "Direct sown in raised bed" }] },
-      { id: 8,  name: "Spinach",          variety: "Giant Nobel",        location: "raised bed",           sowDate: "2026-04-05", germinationDays: 21, germinationTemp: "10–18°C", germinationDate: null,         quantity: 20, germinatedQuantity: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 45,  harvestDate: null,         harvestTemp: "10–18°C", events: [{ date: "2026-04-05", type: "Sown",       detail: "Direct sown, row 1" }] },
-      { id: 9,  name: "Radish",           variety: "Cherry Belle",       location: "raised bed",           sowDate: "2026-03-10", germinationDays: 6,  germinationTemp: "10–20°C", germinationDate: "2026-03-16", quantity: 30, germinatedQuantity: 27,   potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 25,  harvestDate: "2026-04-04", harvestTemp: "10–18°C", events: [{ date: "2026-03-10", type: "Sown",       detail: "Direct sown, row 2" }, { date: "2026-03-16", type: "Germinated", detail: "27 of 30 germinated" }, { date: "2026-04-04", type: "Harvested", detail: "Full harvest, roots firm and sweet" }] },
-      { id: 11, name: "Radish",           variety: "Cherry Belle",       location: "raised bed",           sowDate: "2026-04-13", germinationDays: 6,  germinationTemp: "10–20°C", germinationDate: "2026-04-19", quantity: 30, germinatedQuantity: 28,   potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 25,  harvestDate: null,         harvestTemp: "10–18°C", events: [{ date: "2026-04-13", type: "Sown",       detail: "Direct sown, row 3" }, { date: "2026-04-19", type: "Germinated", detail: "28 of 30 germinated" }] },
-      { id: 10, name: "Spring Onion",     variety: "White Lisbon",       location: "raised bed",           sowDate: "2026-03-01", germinationDays: 14, germinationTemp: "10–18°C", germinationDate: "2026-03-15", quantity: 40, germinatedQuantity: 38,   potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 60,  harvestDate: "2026-04-30", harvestTemp: "10–18°C", events: [{ date: "2026-03-01", type: "Sown",       detail: "Direct sown in rows" }, { date: "2026-03-15", type: "Germinated", detail: "Dense germination across row" }, { date: "2026-04-30", type: "Harvested", detail: "Picked at pencil thickness, full row" }] },
+      // Direct sown — sow → germinate → harvest from sow date
+      { id: 1,  cropType: "sown", name: "Chilli Habanero",  variety: "Orange Habanero",   location: "greenhouse",           sowDate: "2026-04-10", germinationDays: 21, germinationTemp: "25–30°C", germinationDate: null,         quantity: 6,  germinatedQuantity: null, transplantDate: null, potOnDate: null,         lastFed: "2026-04-26", feedEvery: 7,    harvestDays: 150, harvestDate: null,         harvestTemp: "25–30°C", events: [{ date: "2026-04-10", type: "Sown", detail: "Sown 6 seeds in propagator" }] },
+      { id: 2,  cropType: "sown", name: "Tomato",           variety: "San Marzano",        location: "indoor (grow light)",  sowDate: "2026-04-08", germinationDays: 7,  germinationTemp: "20–25°C", germinationDate: "2026-04-15", quantity: 4,  germinatedQuantity: 4,    transplantDate: null, potOnDate: "2026-04-22", lastFed: "2026-04-29", feedEvery: 7,    harvestDays: 120, harvestDate: null,         harvestTemp: "20–26°C", events: [{ date: "2026-04-08", type: "Sown", detail: "Sown under grow light" }, { date: "2026-04-15", type: "Germinated", detail: "All 4 seeds germinated" }, { date: "2026-04-22", type: "Potted", detail: "Potted on to 9cm pots" }] },
+      { id: 3,  cropType: "sown", name: "Basil",            variety: "Sweet Genovese",     location: "indoor (grow light)",  sowDate: "2026-04-22", germinationDays: 14, germinationTemp: "20–25°C", germinationDate: null,         quantity: 8,  germinatedQuantity: null, transplantDate: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 70,  harvestDate: null,         harvestTemp: "18–25°C", events: [{ date: "2026-04-22", type: "Sown", detail: "Sown in seed tray" }] },
+      { id: 4,  cropType: "sown", name: "Cucumber",         variety: "Marketmore",         location: "greenhouse",           sowDate: "2026-04-15", germinationDays: 10, germinationTemp: "20–25°C", germinationDate: "2026-04-25", quantity: 3,  germinatedQuantity: 3,    transplantDate: null, potOnDate: null,         lastFed: "2026-04-30", feedEvery: 7,    harvestDays: 65,  harvestDate: null,         harvestTemp: "18–24°C", events: [{ date: "2026-04-15", type: "Sown", detail: "" }, { date: "2026-04-25", type: "Germinated", detail: "3 out of 3 germinated" }] },
+      { id: 5,  cropType: "sown", name: "Pepper",           variety: "Cayenne Long Slim",  location: "hardening off",        sowDate: "2026-04-23", germinationDays: 14, germinationTemp: "22–28°C", germinationDate: null,         quantity: 5,  germinatedQuantity: null, transplantDate: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 90,  harvestDate: null,         harvestTemp: "20–28°C", events: [{ date: "2026-04-23", type: "Sown", detail: "Sown in heated propagator" }] },
+      { id: 7,  cropType: "sown", name: "Lettuce",          variety: "Butterhead",         location: "raised bed",           sowDate: "2026-04-25", germinationDays: 16, germinationTemp: "10–20°C", germinationDate: null,         quantity: 12, germinatedQuantity: null, transplantDate: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 65,  harvestDate: null,         harvestTemp: "10–20°C", events: [{ date: "2026-04-25", type: "Sown", detail: "Direct sown in raised bed" }] },
+      { id: 8,  cropType: "sown", name: "Spinach",          variety: "Giant Nobel",        location: "raised bed",           sowDate: "2026-04-05", germinationDays: 21, germinationTemp: "10–18°C", germinationDate: null,         quantity: 20, germinatedQuantity: null, transplantDate: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 45,  harvestDate: null,         harvestTemp: "10–18°C", events: [{ date: "2026-04-05", type: "Sown", detail: "Direct sown, row 1" }] },
+      { id: 9,  cropType: "sown", name: "Radish",           variety: "Cherry Belle",       location: "raised bed",           sowDate: "2026-03-10", germinationDays: 6,  germinationTemp: "10–20°C", germinationDate: "2026-03-16", quantity: 30, germinatedQuantity: 27,   transplantDate: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 25,  harvestDate: "2026-04-04", harvestTemp: "10–18°C", events: [{ date: "2026-03-10", type: "Sown", detail: "Direct sown, row 2" }, { date: "2026-03-16", type: "Germinated", detail: "27 of 30 germinated" }, { date: "2026-04-04", type: "Harvested", detail: "Full harvest, roots firm and sweet" }] },
+      { id: 11, cropType: "sown", name: "Radish",           variety: "Cherry Belle",       location: "raised bed",           sowDate: "2026-04-13", germinationDays: 6,  germinationTemp: "10–20°C", germinationDate: "2026-04-19", quantity: 30, germinatedQuantity: 28,   transplantDate: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 25,  harvestDate: null,         harvestTemp: "10–18°C", events: [{ date: "2026-04-13", type: "Sown", detail: "Direct sown, row 3" }, { date: "2026-04-19", type: "Germinated", detail: "28 of 30 germinated" }] },
+      { id: 10, cropType: "sown", name: "Spring Onion",     variety: "White Lisbon",       location: "raised bed",           sowDate: "2026-03-01", germinationDays: 14, germinationTemp: "10–18°C", germinationDate: "2026-03-15", quantity: 40, germinatedQuantity: 38,   transplantDate: null, potOnDate: null,         lastFed: null,         feedEvery: null, harvestDays: 60,  harvestDate: "2026-04-30", harvestTemp: "10–18°C", events: [{ date: "2026-03-01", type: "Sown", detail: "Direct sown in rows" }, { date: "2026-03-15", type: "Germinated", detail: "Dense germination across row" }, { date: "2026-04-30", type: "Harvested", detail: "Picked at pencil thickness, full row" }] },
+      // Transplanted — bought as plug/transplant, harvest counts from transplant date
+      { id: 14, cropType: "transplanted", name: "Broccoli",        variety: "Calabrese",         location: "hardening off",   sowDate: null, germinationDays: null, germinationTemp: null, germinationDate: null, quantity: 6,  germinatedQuantity: null, transplantDate: null,         potOnDate: null, lastFed: null,         feedEvery: null, harvestDays: 80,  harvestDate: null, harvestTemp: "10–18°C", events: [] },
+      { id: 12, cropType: "transplanted", name: "Aubergine",      variety: "Moneymaker",        location: "greenhouse",      sowDate: null, germinationDays: null, germinationTemp: null, germinationDate: null, quantity: 3,  germinatedQuantity: null, transplantDate: "2026-05-01", potOnDate: null, lastFed: "2026-05-04", feedEvery: 7,    harvestDays: 85,  harvestDate: null, harvestTemp: "22–28°C", events: [{ date: "2026-05-01", type: "Transplanted", detail: "3 plug plants from garden centre, planted in greenhouse border" }] },
+      { id: 13, cropType: "transplanted", name: "Leek",            variety: "Musselburgh",       location: "raised bed",      sowDate: null, germinationDays: null, germinationTemp: null, germinationDate: null, quantity: 24, germinatedQuantity: null, transplantDate: "2026-05-03", potOnDate: null, lastFed: null,         feedEvery: null, harvestDays: 120, harvestDate: null, harvestTemp: "5–15°C",  events: [{ date: "2026-05-03", type: "Transplanted", detail: "Pencil-thin seedlings dropped into dibbed holes, 15cm apart" }] },
+      { id: 6,  cropType: "transplanted", name: "Courgette",       variety: "Black Beauty",      location: "raised bed",      sowDate: null, germinationDays: null, germinationTemp: null, germinationDate: null, quantity: 2,  germinatedQuantity: null, transplantDate: "2026-04-30", potOnDate: null, lastFed: "2026-05-02", feedEvery: 7,    harvestDays: 60,  harvestDate: null, harvestTemp: "18–24°C", events: [{ date: "2026-04-30", type: "Transplanted", detail: "2 plug plants planted out in raised bed" }] },
     ];
 
     const LOCATIONS = ["indoor (grow light)", "greenhouse", "raised bed", "hardening off"];
@@ -616,8 +621,9 @@
     }
 
     function estimatedHarvestDate(plant) {
-      if (!plant.sowDate || !plant.harvestDays) return null;
-      const d = new Date(plant.sowDate);
+      const baseDate = plant.cropType === "transplanted" ? plant.transplantDate : plant.sowDate;
+      if (!baseDate || !plant.harvestDays) return null;
+      const d = new Date(baseDate);
       d.setDate(d.getDate() + plant.harvestDays);
       return d.toISOString().split("T")[0];
     }
@@ -767,7 +773,7 @@
         if (fs) {
           allEvents.push({ plant, type: "feed", daysUntil: fs.daysUntil, date: fs.nextDate });
         }
-        if (!plant.germinationDate) {
+        if (!plant.germinationDate && plant.cropType !== "transplanted") {
           const est = estimatedGerminationDate(plant);
           if (est) {
             const daysUntil = Math.round((new Date(est).setHours(0, 0, 0, 0) - todayMs) / msDay);
@@ -851,14 +857,15 @@
 
 
       const cards = state.plants.map(plant => {
-        const sowDays = daysSince(plant.sowDate);
+        const isTransplanted = plant.cropType === "transplanted";
+        const sowDays = isTransplanted ? daysSince(plant.transplantDate) : daysSince(plant.sowDate);
         const fs      = feedStatus(plant);
         const overdue = fs && fs.daysUntil <= 0;
         const color   = LOCATION_COLORS[plant.location] || "#64748b";
 
         const estGermCard    = estimatedGerminationDate(plant);
         const estHarvestCard = estimatedHarvestDate(plant);
-        const germOverdue    = !!(estGermCard && estGermCard < todayStr() && !plant.germinationDate);
+        const germOverdue    = !isTransplanted && !!(estGermCard && estGermCard < todayStr() && !plant.germinationDate);
         const germDaysOver = germOverdue ? Math.floor((Date.now() - new Date(estGermCard).getTime()) / 86400000) : 0;
 
         const overdueLabel = fs && fs.daysUntil < 0  ? `Feed ${Math.abs(fs.daysUntil)}d overdue`
@@ -869,8 +876,13 @@
           ? `×${plant.germinatedQuantity}/${plant.quantity}`
           : plant.quantity ? `×${plant.quantity}` : null;
 
+        const cropTypeTag = isTransplanted
+          ? `<span class="tag" style="background:#f0f4ff;color:#4a5a8a;">🪴 Transplanted</span>`
+          : `<span class="tag" style="background:#f0f7f0;color:#3a6a3a;">🌱 Direct sown</span>`;
+
         const tags = [
           `<span class="tag tag-loc">${esc(plant.location)}</span>`,
+          cropTypeTag,
           sowDays !== null ? `<span class="tag tag-day">day ${sowDays}</span>` : "",
           qtyLabel         ? `<span class="tag" style="background:#f5f0ff;color:#6b46c1;">${qtyLabel}</span>` : "",
           overdue          ? `<span class="tag tag-due">${overdueLabel}</span>` : "",
@@ -884,27 +896,33 @@
           : (plant.feedEvery && !plant.lastFed ? `🗓 Not yet fed` : null);
 
         const dateParts = [
-          plant.sowDate   ? `🌱 Sown ${formatDate(plant.sowDate)}`    : null,
-          plant.lastFed   ? `💧 Fed ${shortAgo(plant.lastFed)}`       : null,
-          plant.potOnDate ? `🪴 Potted ${formatDate(plant.potOnDate)}` : null,
-          plant.germinationDate ? `🌿 Germinated ${formatDate(plant.germinationDate)}` :
-          estGermCard           ? `🌿 Germinates ~${formatDate(estGermCard)}` : null,
-          plant.harvestDate     ? `🌾 Harvested ${formatDate(plant.harvestDate)}` :
-          estHarvestCard        ? `🌾 Harvest ~${formatDate(estHarvestCard)}` : null,
+          isTransplanted
+            ? (plant.transplantDate ? `🪴 Transplanted ${formatDate(plant.transplantDate)}` : null)
+            : (plant.sowDate        ? `🌱 Sown ${formatDate(plant.sowDate)}`                : null),
+          plant.lastFed ? `💧 Fed ${shortAgo(plant.lastFed)}` : null,
+          !isTransplanted && (plant.germinationDate
+            ? `🌿 Germinated ${formatDate(plant.germinationDate)}`
+            : estGermCard ? `🌿 Germinates ~${formatDate(estGermCard)}` : null),
+          plant.harvestDate ? `🌾 Harvested ${formatDate(plant.harvestDate)}` :
+          estHarvestCard    ? `🌾 Harvest ~${formatDate(estHarvestCard)}`     : null,
           feedPart,
         ].filter(Boolean);
         const datesRow = dateParts.length > 0
           ? `<div class="plant-dates">${dateParts.map(d => `<span>${d}</span>`).join("")}</div>`
           : "";
 
-        const btns = [
-          { label: plant.sowDate         ? "✓ Sown"        : "+ Sow",        type: "sow",     done: !!plant.sowDate },
-          { label: plant.germinationDate ? "✓ Germinated"  : "🌿 Germinate", type: "germ",    done: !!plant.germinationDate },
-          { label: plant.potOnDate       ? "✓ Potted"      : "+ Pot on",     type: "poton",   done: !!plant.potOnDate },
-          { label: "💧 Fed",                                                   type: "fed",     done: false },
-          { label: plant.harvestDate     ? "✓ Harvested"   : "🌾 Harvest",   type: "harvest", done: !!plant.harvestDate },
-          { label: "📍 Move",                                                  type: "move",    done: false },
-        ].map(b =>
+        const btns = (isTransplanted ? [
+          { label: plant.transplantDate  ? "✓ Transplanted" : "🪴 Transplant", type: "transplant", done: !!plant.transplantDate },
+          { label: "💧 Fed",                                                     type: "fed",        done: false },
+          { label: plant.harvestDate     ? "✓ Harvested"    : "🌾 Harvest",    type: "harvest",    done: !!plant.harvestDate },
+          { label: "📍 Move",                                                    type: "move",       done: false },
+        ] : [
+          { label: plant.sowDate         ? "✓ Sown"         : "+ Sow",         type: "sow",        done: !!plant.sowDate },
+          { label: plant.germinationDate ? "✓ Germinated"   : "🌿 Germinate",  type: "germ",       done: !!plant.germinationDate },
+          { label: "💧 Fed",                                                     type: "fed",        done: false },
+          { label: plant.harvestDate     ? "✓ Harvested"    : "🌾 Harvest",    type: "harvest",    done: !!plant.harvestDate },
+          { label: "📍 Move",                                                    type: "move",       done: false },
+        ]).map(b =>
           `<button class="quick-btn${b.done ? " done" : ""}" data-action="${b.type}" data-plant="${plant.id}">${b.label}</button>`
         ).join("");
 
@@ -967,7 +985,7 @@
       const p = state.plants.find(pl => pl.id === state.selectedPlantId);
       if (!p) return "";
 
-      const sowDays  = daysSince(p.sowDate);
+      const sowDays  = p.cropType === "transplanted" ? daysSince(p.transplantDate) : daysSince(p.sowDate);
       const color    = LOCATION_COLORS[p.location] || "#64748b";
       const estGerm    = estimatedGerminationDate(p);
       const estHarvest = estimatedHarvestDate(p);
@@ -989,15 +1007,19 @@
         const daysLeft = Math.ceil((new Date(estGerm) - new Date()) / 86400000);
         const col    = daysLeft < 0 ? "#8a9a8a" : daysLeft === 0 ? "#059669" : "#2d4a2d";
         const suffix = daysLeft < 0 ? ` (${Math.abs(daysLeft)}d ago)` : daysLeft === 0 ? " (today!)" : ` (in ${daysLeft}d)`;
-        return `<span style="font-size:12px;font-family:sans-serif;font-weight:600;color:${col};">${formatDate(estGerm)}${suffix}</span>`;
+        const formula = `<span style="font-size:11px;color:#aaa;font-family:sans-serif;margin-right:4px;">sow +${p.germinationDays}d →</span>`;
+        return `${formula}<span style="font-size:12px;font-family:sans-serif;font-weight:600;color:${col};">${formatDate(estGerm)}${suffix}</span>`;
       })();
 
       const estHarvestDisplay = (() => {
-        if (!estHarvest) return `<span style="font-size:12px;font-family:sans-serif;color:#ccc;">set sow date &amp; days</span>`;
+        const needsDate = p.cropType === "transplanted" ? "transplant date &amp; days" : "sow date &amp; days";
+        if (!estHarvest) return `<span style="font-size:12px;font-family:sans-serif;color:#ccc;">set ${needsDate}</span>`;
         const daysLeft = Math.ceil((new Date(estHarvest) - new Date()) / 86400000);
         const col    = daysLeft < 0 ? "#8a9a8a" : daysLeft === 0 ? "#b45309" : "#2d4a2d";
         const suffix = daysLeft < 0 ? ` (${Math.abs(daysLeft)}d ago)` : daysLeft === 0 ? " (today!)" : ` (in ${daysLeft}d)`;
-        return `<span style="font-size:12px;font-family:sans-serif;font-weight:600;color:${col};">${formatDate(estHarvest)}${suffix}</span>`;
+        const basis  = p.cropType === "transplanted" ? "transplant" : "sow";
+        const formula = `<span style="font-size:11px;color:#aaa;font-family:sans-serif;margin-right:4px;">${basis} +${p.harvestDays}d →</span>`;
+        return `${formula}<span style="font-size:12px;font-family:sans-serif;font-weight:600;color:${col};">${formatDate(estHarvest)}${suffix}</span>`;
       })();
 
       const nextFeedDisplay = (() => {
@@ -1033,6 +1055,23 @@
         </div>
 
         <div class="section-card">
+          <div class="section-label">General</div>
+          <div class="date-row">
+            <span class="date-label">Name</span>
+            <input type="text" id="plant-name-input" value="${esc(p.name)}"
+              style="width:160px;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
+          </div>
+          <div class="date-row" style="border-bottom:none;">
+            <span class="date-label">Crop type</span>
+            <select id="crop-type-select" class="location-select">
+              <option value="sown" ${(p.cropType || "sown") === "sown" ? "selected" : ""}>🌱 Direct sown</option>
+              <option value="transplanted" ${p.cropType === "transplanted" ? "selected" : ""}>🪴 Transplanted</option>
+            </select>
+          </div>
+        </div>
+
+        ${(p.cropType || "sown") !== "transplanted" ? `
+        <div class="section-card">
           <div class="section-label">Sowing</div>
           <div class="date-row">
             <span class="date-label">Sow date</span>
@@ -1045,8 +1084,16 @@
               <span style="font-size:12px;color:#888;font-family:sans-serif;">plants</span>
             </div>
           </div>
-        </div>
+        </div>` : ""}
 
+        ${p.cropType === "transplanted" ? `
+        <div class="section-card">
+          <div class="section-label">Transplanting</div>
+          <div class="date-row" style="border-bottom:none;">
+            <span class="date-label">Transplant date</span>
+            ${dateInput("transplantDate", p.transplantDate)}
+          </div>
+        </div>` : `
         <div class="section-card">
           <div class="section-label">Germination</div>
           <div class="date-row">
@@ -1076,7 +1123,7 @@
               <span style="font-size:12px;color:#888;font-family:sans-serif;">plants</span>
             </div>
           </div>
-        </div>
+        </div>`}
 
         <div class="section-card">
           <div class="section-label">Harvest</div>
@@ -1233,10 +1280,11 @@
             const plantId = parseInt(btn.dataset.plant);
             const today   = todayStr();
 
-            if (type === "sow")     { updatePlant(plantId, { sowDate: today }); }
-            if (type === "germ")    { updatePlant(plantId, { germinationDate: today }); }
-            if (type === "poton")   { updatePlant(plantId, { potOnDate: today }); }
-            if (type === "fed")     { updatePlant(plantId, { lastFed: today }); }
+            if (type === "sow")        { updatePlant(plantId, { sowDate: today }); }
+            if (type === "germ")       { updatePlant(plantId, { germinationDate: today }); }
+            if (type === "transplant") { updatePlant(plantId, { transplantDate: today }); }
+            if (type === "poton")      { updatePlant(plantId, { potOnDate: today }); }
+            if (type === "fed")        { updatePlant(plantId, { lastFed: today }); }
             if (type === "harvest") { updatePlant(plantId, { harvestDate: today }); }
             if (type === "move")  {
               state.selectedPlantId = plantId;
@@ -1329,6 +1377,19 @@
         document.getElementById("harvest-temp-input")?.addEventListener("change", e => {
           const val = e.target.value.trim();
           updatePlant(state.selectedPlantId, { harvestTemp: val || null });
+          state.currentNote = document.getElementById("note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("plant-name-input")?.addEventListener("change", e => {
+          const val = e.target.value.trim();
+          if (val) updatePlant(state.selectedPlantId, { name: val });
+          state.currentNote = document.getElementById("note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("crop-type-select")?.addEventListener("change", e => {
+          updatePlant(state.selectedPlantId, { cropType: e.target.value });
           state.currentNote = document.getElementById("note-input")?.value || "";
           render();
         });
