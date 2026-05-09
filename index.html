@@ -470,7 +470,6 @@
     }
 
     .save-note-btn {
-      width: 100%;
       padding: 10px;
       background: #2d4a2d;
       color: #fff;
@@ -966,7 +965,8 @@
         .map(loc => {
           const color = LOCATION_COLORS[loc] || "#64748b";
           const icon  = LOCATION_ICONS[loc]  || "📍";
-          const header = `<div class="location-group-label" style="color:${color};">${icon} ${loc}</div>`;
+          const count = loc !== "raised bed" ? ` <span style="opacity:0.5;font-weight:400;">×${grouped[loc].length}</span>` : "";
+          const header = `<div class="location-group-label" style="color:${color};">${icon} ${loc}${count}</div>`;
 
           if (loc !== "raised bed") {
             return header + grouped[loc].map(renderCard).join("");
@@ -984,7 +984,7 @@
             return Number(a) - Number(b);
           });
           const bedSections = bedKeys.map(key =>
-            `<div class="bed-group-label" style="color:${color};">Bed ${key}</div>`
+            `<div class="bed-group-label" style="color:${color};">Bed ${key} <span style="opacity:0.5;font-weight:400;">×${beds[key].length}</span></div>`
             + beds[key].map(renderCard).join("")
           ).join("");
 
@@ -1225,12 +1225,15 @@
 
         <div class="section-card">
           <div class="section-label">Add a note</div>
-          <textarea class="note-textarea" id="note-input" rows="3"
-            placeholder="e.g. Pinched out growing tip, spotted yellowing on lower leaves...">${esc(state.currentNote)}</textarea>
-          <button class="save-note-btn" id="save-note">Save note</button>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <textarea class="note-textarea" id="note-input" rows="3" style="flex:1;margin-bottom:0;"
+              placeholder="e.g. Pinched out growing tip, spotted yellowing on lower leaves...">${esc(state.currentNote)}</textarea>
+            <button class="save-note-btn" id="save-note" style="width:auto;padding:10px 14px;align-self:stretch;">Add</button>
+          </div>
         </div>
 
-        ${notes}`;
+        ${notes}
+        <button id="back-home-bottom" class="add-plant-btn" style="margin-top:16px;">← All plants</button>`;
     }
 
     // ── Events ─────────────────────────────────────────────────────────────
@@ -1372,9 +1375,11 @@
       }
 
       if (state.view === "detail") {
-        document.getElementById("back-home")?.addEventListener("click", () => {
-          state.view = "home";
-          render();
+        ["back-home", "back-home-bottom"].forEach(id => {
+          document.getElementById(id)?.addEventListener("click", () => {
+            state.view = "home";
+            render();
+          });
         });
 
         document.querySelectorAll(".date-input").forEach(input => {
