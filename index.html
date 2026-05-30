@@ -640,6 +640,40 @@
       return `${d}d ago`;
     }
 
+    function nextAction(plant) {
+      if (plant.harvestDate) return null;
+      const fs = feedStatus(plant);
+      const today = todayStr();
+      const todayMs = new Date(today).setHours(0, 0, 0, 0);
+      const msDay = 86400000;
+
+      if (fs && fs.daysUntil < 0)
+        return { emoji: "🔴", label: `Feed ${Math.abs(fs.daysUntil)}d overdue`, color: "#cc4a20", bg: "#fff0f0" };
+
+      const estHarvest = estimatedHarvestDate(plant);
+      if (estHarvest) {
+        const d = Math.round((new Date(estHarvest).setHours(0, 0, 0, 0) - todayMs) / msDay);
+        if (d <= 0)
+          return { emoji: "🟢", label: d === 0 ? "Harvest now" : `Harvest ${Math.abs(d)}d overdue`, color: "#059669", bg: "#f0fff4" };
+        if (d <= 5)
+          return { emoji: "🟡", label: `Harvest in ${d}d`, color: "#b45309", bg: "#fffbeb" };
+      }
+
+      if (fs && fs.daysUntil === 0) return { emoji: "🟡", label: "Feed today",    color: "#b45309", bg: "#fffbeb" };
+      if (fs && fs.daysUntil === 1) return { emoji: "🟡", label: "Feed tomorrow", color: "#b45309", bg: "#fffbeb" };
+
+      if (estHarvest) {
+        const d = Math.round((new Date(estHarvest).setHours(0, 0, 0, 0) - todayMs) / msDay);
+        if (d <= 14)
+          return { emoji: "🔵", label: `Harvest in ${d}d`, color: "#0369a1", bg: "#eff6ff" };
+      }
+
+      if (fs)
+        return { emoji: "🔵", label: `Feed in ${fs.daysUntil}d`, color: "#0369a1", bg: "#eff6ff" };
+
+      return null;
+    }
+
     function esc(str) {
       return String(str ?? "")
         .replace(/&/g, "&amp;")
@@ -877,27 +911,22 @@
         const estGermCard    = estimatedGerminationDate(plant);
         const estHarvestCard = estimatedHarvestDate(plant);
         const germOverdue    = !isTransplanted && !!(estGermCard && estGermCard < todayStr() && !plant.germinationDate);
-        const germDaysOver = germOverdue ? Math.floor((Date.now() - new Date(estGermCard).getTime()) / 86400000) : 0;
-
-        const overdueLabel = fs && fs.daysUntil < 0  ? `Feed ${Math.abs(fs.daysUntil)}d overdue`
-                           : fs && fs.daysUntil === 0 ? "Feed today" : "";
-        const germLabel    = germDaysOver === 0 ? "Germination today" : `Germination ${germDaysOver}d overdue`;
-
         const qtyLabel = plant.quantity && plant.germinatedQuantity && plant.germinatedQuantity !== plant.quantity
           ? `×${plant.germinatedQuantity}/${plant.quantity}`
           : plant.quantity ? `×${plant.quantity}` : null;
 
-        const cropTypeTag = isTransplanted
-          ? `<span class="tag" style="background:#f0f4ff;color:#4a5a8a;">🪴 Transplanted</span>`
-          : `<span class="tag" style="background:#f0f7f0;color:#3a6a3a;">🌱 Direct sown</span>`;
+        const na = nextAction(plant);
+        const dayPart    = sowDays !== null ? `Day ${sowDays}` : "";
+        const naPart     = na ? `${na.emoji} ${na.label}` : "";
+        const combined   = [dayPart, naPart].filter(Boolean).join(" • ");
+        const statusChip = combined
+          ? `<span class="tag" style="background:${na ? na.bg : "#f0f4ff"};color:${na ? na.color : "#4a5a8a"};">${combined}</span>`
+          : "";
 
         const tags = [
           `<span class="tag tag-loc">${esc(plant.location)}${plant.location === "raised bed" && plant.bedNumber != null ? " " + plant.bedNumber : ""}</span>`,
-          cropTypeTag,
-          sowDays !== null ? `<span class="tag tag-day">day ${sowDays}</span>` : "",
-          qtyLabel         ? `<span class="tag" style="background:#f5f0ff;color:#6b46c1;">${qtyLabel}</span>` : "",
-          overdue          ? `<span class="tag tag-due">${overdueLabel}</span>` : "",
-          germOverdue      ? `<span class="tag" style="background:#fff8e0;color:#b45309;font-weight:600;">${germLabel}</span>` : "",
+          qtyLabel ? `<span class="tag" style="background:#f5f0ff;color:#6b46c1;">${qtyLabel}</span>` : "",
+          statusChip,
         ].join("");
 
         const feedPart = fs
@@ -941,8 +970,9 @@
 
         return `
           <div class="plant-card" data-open="${plant.id}" style="${
-            overdue     ? "background:#fff5f3;border-color:#e8856a;border-width:2px;" :
-            germOverdue ? "background:#fffbf0;border-color:#e8c85a;border-width:2px;" : ""
+            na && na.emoji === "🔴" ? "background:#fff5f3;border-color:#e8856a;border-width:2px;" :
+            na && na.emoji === "🟢" ? "background:#f0fff4;border-color:#86efac;border-width:2px;" :
+            germOverdue             ? "background:#fffbf0;border-color:#e8c85a;border-width:2px;" : ""
           }">
             <div class="plant-card-main">
               <div class="location-icon" style="background:${color}22;">${LOCATION_ICONS[plant.location] || "🌱"}</div>
@@ -1105,12 +1135,15 @@
             <input type="text" id="plant-name-input" value="${esc(p.name)}"
               style="width:160px;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
           </div>
-          <div class="date-row" style="border-bottom:none;">
-            <span class="date-label">Crop type</span>
+          <div class="date-row">
+            <span class="date-label">Growth method</span>
             <select id="crop-type-select" class="location-select">
               <option value="sown" ${(p.cropType || "sown") === "sown" ? "selected" : ""}>🌱 Direct sown</option>
               <option value="transplanted" ${p.cropType === "transplanted" ? "selected" : ""}>🪴 Transplanted</option>
             </select>
+          </div>
+          <div style="font-size:11px;color:#8a9a8a;font-family:sans-serif;padding:2px 0 6px;">
+            ${p.cropType === "transplanted" ? "Harvest estimate uses transplant date" : "Harvest estimate uses sow date"}
           </div>
         </div>
 
