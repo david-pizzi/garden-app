@@ -663,6 +663,39 @@
     const STORAGE_KEY     = "violetta-garden-tracker-v1";
     const SNAPSHOT_PREFIX = "violetta-snap-";
 
+    const AZURE_OAI_ENDPOINT   = "https://garden-app-oai-6a3fb.openai.azure.com/";
+    const AZURE_OAI_DEPLOYMENT = "gpt-4o-mini";
+    const AZURE_OAI_API_VER    = "2024-10-21";
+    const AZURE_OAI_KEY_ENC    = {
+      salt: "5nmHfJoNe8dSxWUgoYznAA==",
+      iv:   "WL4+K3XADpCC8dQE",
+      data: "n7fZKl49i1vtqi9LhwLJRgAwER6bJbI7ZCA+Xy1ifoGHtR5Ix57zUIXcbEj7KVwuPHYMsIWhMy/8eaWDjqq1BS5la2f+08VSaXsDiZyR4NgeMqjUE7VdTl8jA4rHXjeAdt3CxQ=="
+    };
+    let _oaiKey = null;
+
+    async function getOaiKey() {
+      if (_oaiKey) return _oaiKey;
+      const passphrase = prompt("Scan passphrase:");
+      if (!passphrase) throw new Error("Passphrase required");
+      try {
+        const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+        const keyMaterial = await crypto.subtle.importKey(
+          "raw", new TextEncoder().encode(passphrase), "PBKDF2", false, ["deriveKey"]
+        );
+        const aesKey = await crypto.subtle.deriveKey(
+          { name: "PBKDF2", salt: b64(AZURE_OAI_KEY_ENC.salt), iterations: 100000, hash: "SHA-256" },
+          keyMaterial, { name: "AES-GCM", length: 256 }, false, ["decrypt"]
+        );
+        const decrypted = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: b64(AZURE_OAI_KEY_ENC.iv) }, aesKey, b64(AZURE_OAI_KEY_ENC.data)
+        );
+        _oaiKey = new TextDecoder().decode(decrypted);
+        return _oaiKey;
+      } catch {
+        throw new Error("Wrong passphrase");
+      }
+    }
+
     // ── State ──────────────────────────────────────────────────────────────
     function loadState() {
       try {
@@ -1050,7 +1083,8 @@
             <div>No seeds yet</div>
             <div style="margin-top:4px;color:#c8d4c8;">Add your first packet below</div>
           </div>
-          <button class="add-plant-btn" id="start-add-seed">+ Add a seed</button>`;
+          <button class="add-plant-btn" id="start-add-seed">+ Add a seed</button>
+          <button class="add-plant-btn" id="start-scan-seed" style="margin-top:8px;color:#3a6a5a;border-color:#b5c9b5;">📷 Scan packet to add</button>`;
       }
 
       const cards = state.seeds.map(seed => {
@@ -1082,7 +1116,8 @@
             <button class="btn-secondary" id="cancel-add-seed">Cancel</button>
           </div>
         </div>` : `
-        <button class="add-plant-btn" id="start-add-seed">+ Add a seed</button>`;
+        <button class="add-plant-btn" id="start-add-seed">+ Add a seed</button>
+        <button class="add-plant-btn" id="start-scan-seed" style="margin-top:8px;color:#3a6a5a;border-color:#b5c9b5;">📷 Scan packet to add</button>`;
 
       return cards + addSection;
     }
@@ -1769,6 +1804,8 @@
             state.addingSeed = false;
             render();
           });
+
+          document.getElementById("start-scan-seed")?.addEventListener("click", scanAndCreateSeed);
         }
       }
 
@@ -1979,6 +2016,93 @@
       saveState();
       state.addingSeed = false;
       render();
+    }
+
+    async function scanAndCreateSeed() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        let apiKey;
+        try {
+          apiKey = await getOaiKey();
+        } catch (err) {
+          alert(err.message);
+          return;
+        }
+
+        const btn = document.getElementById("start-scan-seed");
+        if (btn) { btn.textContent = "⏳ Scanning…"; btn.disabled = true; }
+
+        try {
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = () => resolve(reader.result.split(",")[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+
+          const res = await fetch(
+            `${AZURE_OAI_ENDPOINT}openai/deployments/${AZURE_OAI_DEPLOYMENT}/chat/completions?api-version=${AZURE_OAI_API_VER}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "api-key": apiKey },
+              body: JSON.stringify({
+                messages: [{
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: `Extract information from this seed packet image. Return ONLY a JSON object, no markdown:\n{"name":"plant name and variety","sowingMonths":"e.g. Mar – Jun or empty string","harvestMonths":"e.g. Jul – Oct or empty string","position":"Full sun or Partial shade or Full shade or empty string","numberPerPacket":null,"expirationYear":null}`,
+                    },
+                    {
+                      type: "image_url",
+                      image_url: { url: `data:${file.type || "image/jpeg"};base64,${base64}`, detail: "low" },
+                    },
+                  ],
+                }],
+                max_tokens: 300,
+              }),
+            }
+          );
+
+          if (!res.ok) throw new Error(`API error ${res.status}`);
+
+          const data  = await res.json();
+          const text  = data.choices?.[0]?.message?.content?.trim() ?? "";
+          const clean = text.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "").trim();
+          const ex    = JSON.parse(clean);
+
+          const validPos = ["Full sun", "Partial shade", "Full shade"];
+          const seed = {
+            id:              Date.now(),
+            name:            ex.name             || "Unknown",
+            sowingMonths:    ex.sowingMonths      || "",
+            harvestMonths:   ex.harvestMonths     || "",
+            position:        validPos.includes(ex.position) ? ex.position : "",
+            numberPerPacket: ex.numberPerPacket != null ? parseInt(ex.numberPerPacket) || null : null,
+            expirationYear:  ex.expirationYear  != null ? parseInt(ex.expirationYear)  || null : null,
+            notes: [],
+          };
+
+          state.seeds.push(seed);
+          saveState();
+          state.addingSeed    = false;
+          state.selectedSeedId = seed.id;
+          state.view          = "seed-detail";
+          render();
+        } catch (err) {
+          alert(`Could not extract from image: ${err.message}`);
+          const b = document.getElementById("start-scan-seed");
+          if (b) { b.textContent = "📷 Scan packet to add"; b.disabled = false; }
+        }
+      };
+
+      input.click();
     }
 
     // ── Boot ───────────────────────────────────────────────────────────────
