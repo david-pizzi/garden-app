@@ -65,6 +65,30 @@
       margin-bottom: 20px;
     }
 
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #ede8e0;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 8px 20px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-size: 14px;
+      font-family: Georgia, serif;
+      color: #8a9a8a;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      color: #2d4a2d;
+      border-bottom-color: #2d4a2d;
+    }
+
     /* ── Summary strip ── */
     .summary-strip {
       display: flex;
@@ -554,6 +578,54 @@
     }
 
     .delete-plant-btn:hover { color: #cc4a20; }
+
+    /* ── Seed cards ── */
+    .seed-card {
+      background: #fff;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border: 1px solid #ede8e0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 14px;
+      gap: 12px;
+    }
+
+    .seed-card:active { background: #f9f6f2; }
+
+    .seed-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #fdf6e3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .seed-name {
+      font-size: 15px;
+      color: #2d4a2d;
+      margin-bottom: 4px;
+    }
+
+    .seed-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+
+    .expiry-ok      { background: #f0f7f0; color: #3a6a3a; }
+    .expiry-soon    { background: #fffbeb; color: #b45309; }
+    .expiry-expired { background: #fff0f0; color: #cc4a20; font-weight: 600; }
+
+    .seed-empty {
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 13px;
+      color: #b0beb0;
+      padding: 32px 0 20px;
+    }
   </style>
 </head>
 <body>
@@ -569,7 +641,6 @@
       { id: 6, name: "Strawflower",          variety: "Mixed",        sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "indoor (grow light)", events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null, harvestDays: null, harvestDate: null, harvestTemp: null },
       { id: 7, name: "Leek",                 variety: "Direct sown",  sowDate: null, potOnDate: null, lastFed: null, feedEvery: null, location: "greenhouse",           events: [], quantity: null, germinationDays: null, germinationTemp: null, germinationDate: null, germinatedQuantity: null, harvestDays: null, harvestDate: null, harvestTemp: null },
     ];
-
 
     const LOCATIONS = ["indoor (grow light)", "greenhouse", "raised bed", "hardening off", "outdoor"];
 
@@ -589,32 +660,44 @@
       "outdoor":             "☀️",
     };
 
-    const STORAGE_KEY    = "violetta-garden-tracker-v1";
+    const STORAGE_KEY     = "violetta-garden-tracker-v1";
     const SNAPSHOT_PREFIX = "violetta-snap-";
 
     // ── State ──────────────────────────────────────────────────────────────
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return { plants: INITIAL_PLANTS, seeds: [] };
+        const parsed = JSON.parse(saved);
+        // Migrate old format (bare plants array) to envelope format
+        if (Array.isArray(parsed)) return { plants: parsed, seeds: [] };
+        return { plants: parsed.plants ?? INITIAL_PLANTS, seeds: parsed.seeds ?? [] };
+      } catch { return { plants: INITIAL_PLANTS, seeds: [] }; }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ plants: state.plants, seeds: state.seeds }));
+      } catch {}
+    }
+
+    const { plants: _plants, seeds: _seeds } = loadState();
+
     const state = {
-      plants:             loadPlants(),
+      plants:             _plants,
+      seeds:              _seeds,
       view:               "home",
+      activeTab:          "plants",
       selectedPlantId:    null,
+      selectedSeedId:     null,
       addingPlant:        false,
+      addingSeed:         false,
       currentNote:        "",
       storageOpen:        false,
       snapshotName:       "",
       importText:         "",
       collapsedLocations: new Set(),
     };
-
-    function loadPlants() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        return saved ? JSON.parse(saved) : INITIAL_PLANTS;
-      } catch { return INITIAL_PLANTS; }
-    }
-
-    function savePlants() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.plants)); } catch {}
-    }
 
     // ── Helpers ────────────────────────────────────────────────────────────
     function daysSince(dateStr) {
@@ -696,6 +779,14 @@
       return null;
     }
 
+    function getSeedExpiryStatus(expirationDate) {
+      if (!expirationDate) return null;
+      const daysUntil = Math.round((new Date(expirationDate) - new Date(todayStr())) / 86400000);
+      if (daysUntil < 0)   return { label: "Expired",                          cls: "expiry-expired" };
+      if (daysUntil <= 180) return { label: `Expires ${formatDate(expirationDate)}`, cls: "expiry-soon" };
+      return                       { label: `Expires ${formatDate(expirationDate)}`, cls: "expiry-ok" };
+    }
+
     function esc(str) {
       return String(str ?? "")
         .replace(/&/g, "&amp;")
@@ -704,16 +795,16 @@
         .replace(/"/g, "&quot;");
     }
 
-    // ── Data mutations ─────────────────────────────────────────────────────
+    // ── Plant mutations ────────────────────────────────────────────────────
     function updatePlant(id, updates) {
       state.plants = state.plants.map(p => p.id === id ? { ...p, ...updates } : p);
-      savePlants();
+      saveState();
     }
 
     function deletePlant(id) {
       if (!confirm(`Delete this plant? This cannot be undone.`)) return;
       state.plants = state.plants.filter(p => p.id !== id);
-      savePlants();
+      saveState();
       render();
     }
 
@@ -724,7 +815,32 @@
           ? { ...p, events: [ev, ...(p.events || [])].slice(0, 30) }
           : p
       );
-      savePlants();
+      saveState();
+    }
+
+    // ── Seed mutations ─────────────────────────────────────────────────────
+    function updateSeed(id, updates) {
+      state.seeds = state.seeds.map(s => s.id === id ? { ...s, ...updates } : s);
+      saveState();
+    }
+
+    function deleteSeed(id) {
+      if (!confirm(`Delete this seed? This cannot be undone.`)) return;
+      state.seeds = state.seeds.filter(s => s.id !== id);
+      saveState();
+      state.view = "home";
+      state.activeTab = "seeds";
+      render();
+    }
+
+    function logSeedNote(seedId, note) {
+      const ev = { date: todayStr(), type: "note", detail: note };
+      state.seeds = state.seeds.map(s =>
+        s.id === seedId
+          ? { ...s, notes: [ev, ...(s.notes || [])].slice(0, 30) }
+          : s
+      );
+      saveState();
     }
 
     // ── Storage management ─────────────────────────────────────────────────
@@ -741,15 +857,22 @@
 
     function saveSnapshot(name) {
       if (!name.trim()) return;
-      localStorage.setItem(SNAPSHOT_PREFIX + name.trim(), JSON.stringify(state.plants));
+      localStorage.setItem(SNAPSHOT_PREFIX + name.trim(), JSON.stringify({ plants: state.plants, seeds: state.seeds }));
     }
 
     function loadSnapshot(name) {
       try {
         const data = localStorage.getItem(SNAPSHOT_PREFIX + name);
         if (!data) return;
-        state.plants = JSON.parse(data);
-        savePlants();
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) {
+          state.plants = parsed;
+          state.seeds = [];
+        } else {
+          state.plants = parsed.plants ?? [];
+          state.seeds  = parsed.seeds  ?? [];
+        }
+        saveState();
         state.storageOpen = false;
         render();
       } catch { alert("Could not load snapshot."); }
@@ -764,10 +887,19 @@
     function importFromText(text) {
       try {
         const data = JSON.parse(text);
-        if (!Array.isArray(data)) throw new Error();
-        if (!confirm(`Import ${data.length} plants? This will replace your current data.`)) return;
-        state.plants = data;
-        savePlants();
+        if (Array.isArray(data)) {
+          if (!confirm(`Import ${data.length} plants? This will replace your current data.`)) return;
+          state.plants = data;
+        } else if (data && (data.plants || data.seeds)) {
+          const pc = (data.plants || []).length;
+          const sc = (data.seeds  || []).length;
+          if (!confirm(`Import ${pc} plants and ${sc} seeds? This will replace your current data.`)) return;
+          state.plants = data.plants ?? [];
+          state.seeds  = data.seeds  ?? [];
+        } else {
+          throw new Error();
+        }
+        saveState();
         state.storageOpen = false;
         state.importText = "";
         render();
@@ -776,8 +908,11 @@
 
     // ── Render ─────────────────────────────────────────────────────────────
     function render() {
-      document.getElementById("app").innerHTML =
-        state.view === "detail" ? renderDetail() : renderHome();
+      let html;
+      if (state.view === "detail")      html = renderDetail();
+      else if (state.view === "seed-detail") html = renderSeedDetail();
+      else                              html = renderHome();
+      document.getElementById("app").innerHTML = html;
       attachEvents();
     }
 
@@ -807,7 +942,7 @@
             onclick="this.select()"
             style="font-family:monospace;font-size:11px;color:#444;cursor:pointer;"
             title="Click to select all, then copy"
-          >${esc(JSON.stringify(state.plants, null, 2))}</textarea>
+          >${esc(JSON.stringify({ plants: state.plants, seeds: state.seeds }, null, 2))}</textarea>
 
           <div class="section-label" style="margin-top:6px;">Import — paste JSON below</div>
           <textarea class="note-textarea" id="import-text" rows="4"
@@ -904,9 +1039,74 @@
       </div>`;
     }
 
+    function renderSeedList() {
+      if (state.seeds.length === 0 && !state.addingSeed) {
+        return `
+          <div class="seed-empty">
+            <div style="font-size:32px;margin-bottom:8px;">🌾</div>
+            <div>No seeds yet</div>
+            <div style="margin-top:4px;color:#c8d4c8;">Add your first packet below</div>
+          </div>
+          <button class="add-plant-btn" id="start-add-seed">+ Add a seed</button>`;
+      }
+
+      const cards = state.seeds.map(seed => {
+        const expiry = getSeedExpiryStatus(seed.expirationDate);
+        const tags = [
+          seed.numberPerPacket != null ? `<span class="tag" style="background:#f5f0ff;color:#6b46c1;">×${seed.numberPerPacket} seeds</span>` : "",
+          seed.harvestPeriod ? `<span class="tag tag-loc">${esc(seed.harvestPeriod)}</span>` : "",
+          expiry ? `<span class="tag ${expiry.cls}">${esc(expiry.label)}</span>` : "",
+        ].filter(Boolean).join("");
+
+        return `
+          <div class="seed-card" data-open-seed="${seed.id}">
+            <div class="seed-icon">🌾</div>
+            <div style="flex:1;min-width:0;">
+              <div class="seed-name">${esc(seed.name)}</div>
+              <div class="seed-meta">${tags || '<span style="font-size:11px;color:#ccc;font-family:sans-serif;">No details added</span>'}</div>
+            </div>
+            <div class="chevron">›</div>
+          </div>`;
+      }).join("");
+
+      const addSection = state.addingSeed ? `
+        <div class="add-plant-form">
+          <input id="new-seed-name" class="input-text" type="text" placeholder="Seed name (e.g. Tomato — Roma)" autofocus>
+          <div class="btn-row">
+            <button class="btn-primary" id="confirm-add-seed">Add Seed</button>
+            <button class="btn-secondary" id="cancel-add-seed">Cancel</button>
+          </div>
+        </div>` : `
+        <button class="add-plant-btn" id="start-add-seed">+ Add a seed</button>`;
+
+      return cards + addSection;
+    }
+
     function renderHome() {
       const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
+      const header = `
+        <div class="header">
+          <h1>Violetta's<br>Growing Journal</h1>
+          <div class="header-right">
+            <span class="header-icon">🌿</span>
+            <button class="manage-btn${state.storageOpen ? " active" : ""}" id="toggle-storage">
+              ${state.storageOpen ? "✕ close" : "💾 manage data"}
+            </button>
+          </div>
+        </div>
+        <div class="date-line">${today}</div>
+        ${state.storageOpen ? renderStoragePanel() : ""}
+        <div class="tabs">
+          <button class="tab-btn${state.activeTab === "plants" ? " active" : ""}" id="tab-plants">Plants</button>
+          <button class="tab-btn${state.activeTab === "seeds"  ? " active" : ""}" id="tab-seeds">Seeds</button>
+        </div>`;
+
+      if (state.activeTab === "seeds") {
+        return header + renderSeedList();
+      }
+
+      // ── Plants tab ──
       const chips = Object.entries(LOCATION_ICONS).map(([loc, icon]) => {
         const n = state.plants.filter(p => p.location === loc).length;
         return n > 0 ? `<div class="summary-chip">${icon} ${n}</div>` : "";
@@ -914,7 +1114,6 @@
 
       const sownCount       = state.plants.filter(p => p.sowDate).length;
       const germinatedCount = state.plants.filter(p => p.germinationDate).length;
-
 
       const grouped = {};
       LOCATIONS.forEach(loc => { grouped[loc] = []; });
@@ -927,7 +1126,6 @@
         const isTransplanted = plant.cropType === "transplanted";
         const sowDays = isTransplanted ? daysSince(plant.transplantDate) : daysSince(plant.sowDate);
         const fs      = feedStatus(plant);
-        const overdue = fs && fs.daysUntil <= 0;
         const color   = LOCATION_COLORS[plant.location] || "#64748b";
 
         const estGermCard    = estimatedGerminationDate(plant);
@@ -1057,18 +1255,7 @@
         </div>` : `
         <button class="add-plant-btn" id="start-add">+ Add another plant</button>`;
 
-      return `
-        <div class="header">
-          <h1>Violetta's<br>Growing Journal</h1>
-          <div class="header-right">
-            <span class="header-icon">🌿</span>
-            <button class="manage-btn${state.storageOpen ? " active" : ""}" id="toggle-storage">
-              ${state.storageOpen ? "✕ close" : "💾 manage data"}
-            </button>
-          </div>
-        </div>
-        <div class="date-line">${today}</div>
-        ${state.storageOpen ? renderStoragePanel() : ""}
+      return header + `
         <div class="summary-strip">
           ${chips}
           ${sownCount > 0       ? `<div class="summary-chip">🌱 ${sownCount}</div>` : ""}
@@ -1079,6 +1266,76 @@
         <div class="page-section-label">Plants</div>
         ${cards}
         ${addSection}`;
+    }
+
+    function renderSeedDetail() {
+      const s = state.seeds.find(sd => sd.id === state.selectedSeedId);
+      if (!s) return "";
+
+      const expiry = getSeedExpiryStatus(s.expirationDate);
+
+      const seedNotes = s.notes && s.notes.filter(e => e.type === "note").length > 0 ? `
+        <div class="section-card">
+          <div class="section-label">Notes</div>
+          ${s.notes.filter(e => e.type === "note").map(ev => `
+            <div class="event-row">
+              <div class="event-date">${formatDate(ev.date)}</div>
+              <div class="event-detail">${esc(ev.detail)}</div>
+            </div>`).join("")}
+        </div>` : "";
+
+      return `
+        <button class="back-btn" id="back-seeds">← All seeds</button>
+        <div class="detail-title">${esc(s.name)}</div>
+        <div class="detail-meta">
+          <span class="tag" style="background:#fdf6e3;color:#92630a;">🌾 Seed</span>
+          ${expiry ? `<span class="tag ${expiry.cls}">${esc(expiry.label)}</span>` : ""}
+        </div>
+
+        <div class="section-card">
+          <div class="section-label">Details</div>
+          <div class="date-row">
+            <span class="date-label">Name</span>
+            <input type="text" id="seed-name-input" value="${esc(s.name)}"
+              style="width:180px;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
+          </div>
+          <div class="date-row">
+            <span class="date-label">Seeds per packet</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input type="number" id="seed-qty-input" min="1" max="9999"
+                value="${s.numberPerPacket || ""}" placeholder="—"
+                style="width:64px;text-align:center;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
+              <span style="font-size:12px;color:#888;font-family:sans-serif;">seeds</span>
+            </div>
+          </div>
+          <div class="date-row">
+            <span class="date-label">Harvest period</span>
+            <input type="text" id="seed-harvest-input" value="${esc(s.harvestPeriod || "")}" placeholder="e.g. Jul–Sep"
+              style="width:140px;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
+          </div>
+          <div class="date-row" style="border-bottom:none;">
+            <span class="date-label">Expiration date</span>
+            <input type="date" id="seed-expiry-input" class="date-input"
+              value="${s.expirationDate || ""}">
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-label">Add a note</div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <textarea class="note-textarea" id="seed-note-input" rows="3" style="flex:1;margin-bottom:0;"
+              placeholder="e.g. Bought from local nursery, germination rate ~85%…">${esc(state.currentNote)}</textarea>
+            <button class="save-note-btn" id="save-seed-note" style="width:auto;padding:10px 14px;align-self:stretch;">Add</button>
+          </div>
+        </div>
+
+        ${seedNotes}
+
+        <button class="btn-danger" id="delete-seed-btn"
+          style="width:100%;padding:12px;margin-top:8px;border-radius:8px;font-size:14px;">
+          Delete seed
+        </button>
+        <button id="back-seeds-bottom" class="add-plant-btn" style="margin-top:12px;">← All seeds</button>`;
     }
 
     function renderDetail() {
@@ -1297,11 +1554,24 @@
 
     // ── Events ─────────────────────────────────────────────────────────────
     function attachEvents() {
+      // ── Home view (plants or seeds tab) ──
       if (state.view === "home") {
 
         document.getElementById("toggle-storage")?.addEventListener("click", () => {
           state.storageOpen = !state.storageOpen;
           state.snapshotName = "";
+          render();
+        });
+
+        document.getElementById("tab-plants")?.addEventListener("click", () => {
+          state.activeTab = "plants";
+          state.addingSeed = false;
+          render();
+        });
+
+        document.getElementById("tab-seeds")?.addEventListener("click", () => {
+          state.activeTab = "seeds";
+          state.addingPlant = false;
           render();
         });
 
@@ -1347,105 +1617,135 @@
               .then(r => r.json())
               .then(data => {
                 state.plants = data;
-                savePlants();
+                saveState();
                 render();
               })
               .catch(() => alert("Could not load sample-plants.json. Open the app via a local server (e.g. Live Server)."));
           });
 
           document.getElementById("do-reset")?.addEventListener("click", () => {
-            if (!confirm("Reset to default? All plant data will be cleared.")) return;
+            if (!confirm("Reset to default? All plant and seed data will be cleared.")) return;
             localStorage.removeItem(STORAGE_KEY);
             state.plants = JSON.parse(JSON.stringify(INITIAL_PLANTS));
+            state.seeds  = [];
             render();
           });
         }
 
-        // Location group collapse/expand
-        document.querySelectorAll("[data-toggle-loc]").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const loc = btn.dataset.toggleLoc;
-            if (state.collapsedLocations.has(loc)) {
-              state.collapsedLocations.delete(loc);
-            } else {
-              state.collapsedLocations.add(loc);
-            }
-            render();
+        // ── Plants tab events ──
+        if (state.activeTab === "plants") {
+          document.querySelectorAll("[data-toggle-loc]").forEach(btn => {
+            btn.addEventListener("click", () => {
+              const loc = btn.dataset.toggleLoc;
+              if (state.collapsedLocations.has(loc)) {
+                state.collapsedLocations.delete(loc);
+              } else {
+                state.collapsedLocations.add(loc);
+              }
+              render();
+            });
           });
-        });
 
-        // Delete plant buttons
-        document.querySelectorAll(".delete-plant-btn").forEach(btn => {
-          btn.addEventListener("click", e => {
-            e.stopPropagation();
-            deletePlant(parseInt(btn.dataset.delPlant));
+          document.querySelectorAll(".delete-plant-btn").forEach(btn => {
+            btn.addEventListener("click", e => {
+              e.stopPropagation();
+              deletePlant(parseInt(btn.dataset.delPlant));
+            });
           });
-        });
 
-        // Schedule overview items
-        document.querySelectorAll(".ov-item").forEach(item => {
-          item.addEventListener("click", () => {
-            state.selectedPlantId = parseInt(item.dataset.open);
-            state.currentNote = "";
-            state.view = "detail";
-            render();
-          });
-        });
-
-        // Plant cards
-        document.querySelectorAll(".plant-card").forEach(card => {
-          card.addEventListener("click", e => {
-            if (e.target.closest(".quick-actions")) return;
-            state.selectedPlantId = parseInt(card.dataset.open);
-            state.currentNote = "";
-            state.view = "detail";
-            render();
-          });
-        });
-
-        document.querySelectorAll(".quick-btn").forEach(btn => {
-          btn.addEventListener("click", e => {
-            e.stopPropagation();
-            const type    = btn.dataset.action;
-            const plantId = parseInt(btn.dataset.plant);
-            const today   = todayStr();
-
-            if (type === "sow")        { updatePlant(plantId, { sowDate: today }); }
-            if (type === "germ")       { updatePlant(plantId, { germinationDate: today }); }
-            if (type === "transplant") { updatePlant(plantId, { transplantDate: today }); }
-            if (type === "poton")      { updatePlant(plantId, { potOnDate: today }); }
-            if (type === "fed")        { updatePlant(plantId, { lastFed: today }); }
-            if (type === "harvest") { updatePlant(plantId, { harvestDate: today }); }
-            if (type === "move")  {
-              state.selectedPlantId = plantId;
+          document.querySelectorAll(".ov-item").forEach(item => {
+            item.addEventListener("click", () => {
+              state.selectedPlantId = parseInt(item.dataset.open);
               state.currentNote = "";
               state.view = "detail";
               render();
-              setTimeout(() => document.getElementById("loc-select")?.focus(), 50);
-              return;
-            }
+            });
+          });
+
+          document.querySelectorAll(".plant-card").forEach(card => {
+            card.addEventListener("click", e => {
+              if (e.target.closest(".quick-actions")) return;
+              state.selectedPlantId = parseInt(card.dataset.open);
+              state.currentNote = "";
+              state.view = "detail";
+              render();
+            });
+          });
+
+          document.querySelectorAll(".quick-btn").forEach(btn => {
+            btn.addEventListener("click", e => {
+              e.stopPropagation();
+              const type    = btn.dataset.action;
+              const plantId = parseInt(btn.dataset.plant);
+              const today   = todayStr();
+
+              if (type === "sow")        { updatePlant(plantId, { sowDate: today }); }
+              if (type === "germ")       { updatePlant(plantId, { germinationDate: today }); }
+              if (type === "transplant") { updatePlant(plantId, { transplantDate: today }); }
+              if (type === "poton")      { updatePlant(plantId, { potOnDate: today }); }
+              if (type === "fed")        { updatePlant(plantId, { lastFed: today }); }
+              if (type === "harvest") { updatePlant(plantId, { harvestDate: today }); }
+              if (type === "move")  {
+                state.selectedPlantId = plantId;
+                state.currentNote = "";
+                state.view = "detail";
+                render();
+                setTimeout(() => document.getElementById("loc-select")?.focus(), 50);
+                return;
+              }
+              render();
+            });
+          });
+
+          document.getElementById("start-add")?.addEventListener("click", () => {
+            state.addingPlant = true;
+            render();
+            document.getElementById("new-plant-name")?.focus();
+          });
+
+          document.getElementById("confirm-add")?.addEventListener("click", confirmAddPlant);
+
+          document.getElementById("new-plant-name")?.addEventListener("keydown", e => {
+            if (e.key === "Enter") confirmAddPlant();
+          });
+
+          document.getElementById("cancel-add")?.addEventListener("click", () => {
+            state.addingPlant = false;
             render();
           });
-        });
+        }
 
-        document.getElementById("start-add")?.addEventListener("click", () => {
-          state.addingPlant = true;
-          render();
-          document.getElementById("new-plant-name")?.focus();
-        });
+        // ── Seeds tab events ──
+        if (state.activeTab === "seeds") {
+          document.querySelectorAll("[data-open-seed]").forEach(card => {
+            card.addEventListener("click", () => {
+              state.selectedSeedId = parseInt(card.dataset.openSeed);
+              state.currentNote = "";
+              state.view = "seed-detail";
+              render();
+            });
+          });
 
-        document.getElementById("confirm-add")?.addEventListener("click", confirmAddPlant);
+          document.getElementById("start-add-seed")?.addEventListener("click", () => {
+            state.addingSeed = true;
+            render();
+            document.getElementById("new-seed-name")?.focus();
+          });
 
-        document.getElementById("new-plant-name")?.addEventListener("keydown", e => {
-          if (e.key === "Enter") confirmAddPlant();
-        });
+          document.getElementById("confirm-add-seed")?.addEventListener("click", confirmAddSeed);
 
-        document.getElementById("cancel-add")?.addEventListener("click", () => {
-          state.addingPlant = false;
-          render();
-        });
+          document.getElementById("new-seed-name")?.addEventListener("keydown", e => {
+            if (e.key === "Enter") confirmAddSeed();
+          });
+
+          document.getElementById("cancel-add-seed")?.addEventListener("click", () => {
+            state.addingSeed = false;
+            render();
+          });
+        }
       }
 
+      // ── Plant detail view ──
       if (state.view === "detail") {
         ["back-home", "back-home-bottom"].forEach(id => {
           document.getElementById(id)?.addEventListener("click", () => {
@@ -1552,6 +1852,58 @@
         });
       }
 
+      // ── Seed detail view ──
+      if (state.view === "seed-detail") {
+        ["back-seeds", "back-seeds-bottom"].forEach(id => {
+          document.getElementById(id)?.addEventListener("click", () => {
+            state.view = "home";
+            state.activeTab = "seeds";
+            render();
+          });
+        });
+
+        document.getElementById("seed-name-input")?.addEventListener("change", e => {
+          const val = e.target.value.trim();
+          if (val) updateSeed(state.selectedSeedId, { name: val });
+          state.currentNote = document.getElementById("seed-note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("seed-qty-input")?.addEventListener("change", e => {
+          const val = parseInt(e.target.value);
+          updateSeed(state.selectedSeedId, { numberPerPacket: val > 0 ? val : null });
+          state.currentNote = document.getElementById("seed-note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("seed-harvest-input")?.addEventListener("change", e => {
+          updateSeed(state.selectedSeedId, { harvestPeriod: e.target.value.trim() || "" });
+          state.currentNote = document.getElementById("seed-note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("seed-expiry-input")?.addEventListener("change", e => {
+          updateSeed(state.selectedSeedId, { expirationDate: e.target.value || null });
+          state.currentNote = document.getElementById("seed-note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("seed-note-input")?.addEventListener("input", e => {
+          state.currentNote = e.target.value;
+        });
+
+        document.getElementById("save-seed-note")?.addEventListener("click", () => {
+          const note = document.getElementById("seed-note-input")?.value?.trim();
+          if (!note) return;
+          logSeedNote(state.selectedSeedId, note);
+          state.currentNote = "";
+          render();
+        });
+
+        document.getElementById("delete-seed-btn")?.addEventListener("click", () => {
+          deleteSeed(state.selectedSeedId);
+        });
+      }
     }
 
     function confirmAddPlant() {
@@ -1564,8 +1916,23 @@
         quantity: null, germinationDays: null, germinationTemp: null,
         germinationDate: null, germinatedQuantity: null,
       });
-      savePlants();
+      saveState();
       state.addingPlant = false;
+      render();
+    }
+
+    function confirmAddSeed() {
+      const name = document.getElementById("new-seed-name")?.value?.trim();
+      if (!name) return;
+      state.seeds.push({
+        id: Date.now(), name,
+        numberPerPacket: null,
+        harvestPeriod: "",
+        expirationDate: null,
+        notes: [],
+      });
+      saveState();
+      state.addingSeed = false;
       render();
     }
 
