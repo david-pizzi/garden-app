@@ -678,7 +678,9 @@
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ plants: state.plants, seeds: state.seeds }));
-      } catch {}
+      } catch {
+        alert("Could not save — storage may be full. Export your data from the manage panel to avoid losing it.");
+      }
     }
 
     const { plants: _plants, seeds: _seeds } = loadState();
@@ -1415,13 +1417,16 @@
         </div>`;
       })();
 
-      const notes = p.events && p.events.filter(e => e.type === "note").length > 0 ? `
+      const notes = p.events && p.events.length > 0 ? `
         <div class="section-card">
-          <div class="section-label">Notes</div>
-          ${p.events.filter(e => e.type === "note").map(ev => `
+          <div class="section-label">Event Log</div>
+          ${p.events.map(ev => `
             <div class="event-row">
               <div class="event-date">${formatDate(ev.date)}</div>
-              <div class="event-detail">${esc(ev.detail)}</div>
+              <div style="flex:1;">
+                ${ev.type !== "note" ? `<span class="event-type">${esc(ev.type)}</span>` : ""}
+                ${ev.detail ? `<span class="event-detail">${esc(ev.detail)}</span>` : ""}
+              </div>
             </div>`).join("")}
         </div>` : "";
 
@@ -1859,6 +1864,7 @@
         document.getElementById("bed-number-input")?.addEventListener("change", e => {
           const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
           updatePlant(state.selectedPlantId, { bedNumber: isNaN(val) ? null : val });
+          render();
         });
 
         document.getElementById("note-input")?.addEventListener("input", e => {
@@ -1945,11 +1951,13 @@
       const name = document.getElementById("new-plant-name")?.value?.trim();
       if (!name) return;
       state.plants.push({
-        id: Date.now(), name, variety: "", sowDate: null,
-        potOnDate: null, lastFed: null, feedEvery: null,
+        id: Date.now(), name, variety: "", cropType: "sown",
+        sowDate: null, potOnDate: null, lastFed: null, feedEvery: null,
         location: "indoor (grow light)", events: [],
         quantity: null, germinationDays: null, germinationTemp: null,
         germinationDate: null, germinatedQuantity: null,
+        transplantDate: null, bedNumber: null,
+        harvestDays: null, harvestDate: null, harvestTemp: null,
       });
       saveState();
       state.addingPlant = false;
