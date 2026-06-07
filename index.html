@@ -147,9 +147,28 @@
       letter-spacing: 0.07em;
       margin: 18px 0 8px;
       opacity: 0.75;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      background: none;
+      border: none;
+      padding: 0;
+      width: 100%;
+      text-align: left;
     }
     .location-group-label:first-child {
       margin-top: 0;
+    }
+    .location-group-chevron {
+      font-style: normal;
+      font-size: 13px;
+      opacity: 0.5;
+      transition: transform 0.15s;
+    }
+    .location-group-chevron.collapsed {
+      transform: rotate(-90deg);
     }
 
     .bed-group-label {
@@ -575,14 +594,15 @@
 
     // ── State ──────────────────────────────────────────────────────────────
     const state = {
-      plants:          loadPlants(),
-      view:            "home",
-      selectedPlantId: null,
-      addingPlant:     false,
-      currentNote:     "",
-      storageOpen:     false,
-      snapshotName:    "",
-      importText:      "",
+      plants:             loadPlants(),
+      view:               "home",
+      selectedPlantId:    null,
+      addingPlant:        false,
+      currentNote:        "",
+      storageOpen:        false,
+      snapshotName:       "",
+      importText:         "",
+      collapsedLocations: new Set(),
     };
 
     function loadPlants() {
@@ -995,10 +1015,14 @@
       const cards = LOCATIONS
         .filter(loc => grouped[loc].length > 0)
         .map(loc => {
-          const color = LOCATION_COLORS[loc] || "#64748b";
-          const icon  = LOCATION_ICONS[loc]  || "📍";
-          const count = loc !== "raised bed" ? ` <span style="opacity:0.5;font-weight:400;">×${grouped[loc].length}</span>` : "";
-          const header = `<div class="location-group-label" style="color:${color};">${icon} ${loc}${count}</div>`;
+          const color     = LOCATION_COLORS[loc] || "#64748b";
+          const icon      = LOCATION_ICONS[loc]  || "📍";
+          const collapsed = state.collapsedLocations.has(loc);
+          const count     = loc !== "raised bed" ? ` <span style="opacity:0.5;font-weight:400;">×${grouped[loc].length}</span>` : "";
+          const chevron   = `<span class="location-group-chevron${collapsed ? " collapsed" : ""}">▾</span>`;
+          const header    = `<button class="location-group-label" data-toggle-loc="${esc(loc)}" style="color:${color};"><span>${icon} ${loc}${count}</span>${chevron}</button>`;
+
+          if (collapsed) return header;
 
           if (loc !== "raised bed") {
             return header + grouped[loc].map(renderCard).join("");
@@ -1336,6 +1360,19 @@
             render();
           });
         }
+
+        // Location group collapse/expand
+        document.querySelectorAll("[data-toggle-loc]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const loc = btn.dataset.toggleLoc;
+            if (state.collapsedLocations.has(loc)) {
+              state.collapsedLocations.delete(loc);
+            } else {
+              state.collapsedLocations.add(loc);
+            }
+            render();
+          });
+        });
 
         // Delete plant buttons
         document.querySelectorAll(".delete-plant-btn").forEach(btn => {
