@@ -779,12 +779,13 @@
       return null;
     }
 
-    function getSeedExpiryStatus(expirationDate) {
-      if (!expirationDate) return null;
-      const daysUntil = Math.round((new Date(expirationDate) - new Date(todayStr())) / 86400000);
-      if (daysUntil < 0)   return { label: "Expired",                          cls: "expiry-expired" };
-      if (daysUntil <= 180) return { label: `Expires ${formatDate(expirationDate)}`, cls: "expiry-soon" };
-      return                       { label: `Expires ${formatDate(expirationDate)}`, cls: "expiry-ok" };
+    function getSeedExpiryStatus(expirationYear) {
+      if (!expirationYear) return null;
+      const currentYear = new Date().getFullYear();
+      const yr = parseInt(expirationYear);
+      if (yr < currentYear)       return { label: `Expired ${yr}`,        cls: "expiry-expired" };
+      if (yr <= currentYear + 1)  return { label: `Expires ${yr}`,        cls: "expiry-soon" };
+      return                             { label: `Expires ${yr}`,         cls: "expiry-ok" };
     }
 
     function esc(str) {
@@ -1051,10 +1052,12 @@
       }
 
       const cards = state.seeds.map(seed => {
-        const expiry = getSeedExpiryStatus(seed.expirationDate);
+        const expiry = getSeedExpiryStatus(seed.expirationYear);
         const tags = [
           seed.numberPerPacket != null ? `<span class="tag" style="background:#f5f0ff;color:#6b46c1;">×${seed.numberPerPacket} seeds</span>` : "",
-          seed.harvestPeriod ? `<span class="tag tag-loc">${esc(seed.harvestPeriod)}</span>` : "",
+          seed.sowingMonths   ? `<span class="tag tag-loc">🌱 ${esc(seed.sowingMonths)}</span>`   : "",
+          seed.harvestMonths  ? `<span class="tag tag-loc">🌾 ${esc(seed.harvestMonths)}</span>`  : "",
+          seed.position       ? `<span class="tag" style="background:#fdf6e3;color:#92630a;">☀️ ${esc(seed.position)}</span>` : "",
           expiry ? `<span class="tag ${expiry.cls}">${esc(expiry.label)}</span>` : "",
         ].filter(Boolean).join("");
 
@@ -1272,7 +1275,7 @@
       const s = state.seeds.find(sd => sd.id === state.selectedSeedId);
       if (!s) return "";
 
-      const expiry = getSeedExpiryStatus(s.expirationDate);
+      const expiry = getSeedExpiryStatus(s.expirationYear);
 
       const seedNotes = s.notes && s.notes.filter(e => e.type === "note").length > 0 ? `
         <div class="section-card">
@@ -1308,15 +1311,34 @@
               <span style="font-size:12px;color:#888;font-family:sans-serif;">seeds</span>
             </div>
           </div>
+          <div class="date-row" style="border-bottom:none;">
+            <span class="date-label">Expiry year</span>
+            <input type="number" id="seed-expiry-input" min="2000" max="2060"
+              value="${s.expirationYear || ""}" placeholder="e.g. 2027"
+              style="width:90px;text-align:center;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-label">Key Facts</div>
           <div class="date-row">
-            <span class="date-label">Harvest period</span>
-            <input type="text" id="seed-harvest-input" value="${esc(s.harvestPeriod || "")}" placeholder="e.g. Jul–Sep"
+            <span class="date-label">Sowing months</span>
+            <input type="text" id="seed-sowing-input" value="${esc(s.sowingMonths || "")}" placeholder="e.g. Apr – Jun"
+              style="width:140px;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
+          </div>
+          <div class="date-row">
+            <span class="date-label">Harvest months</span>
+            <input type="text" id="seed-harvest-input" value="${esc(s.harvestMonths || "")}" placeholder="e.g. Jul – Oct"
               style="width:140px;padding:4px 8px;border:1px solid #b5d0b5;border-radius:6px;font-size:12px;background:#f0f7f0;color:#2d4a2d;font-family:sans-serif;">
           </div>
           <div class="date-row" style="border-bottom:none;">
-            <span class="date-label">Expiration date</span>
-            <input type="date" id="seed-expiry-input" class="date-input"
-              value="${s.expirationDate || ""}">
+            <span class="date-label">Position</span>
+            <select id="seed-position-select" class="location-select">
+              <option value="">—</option>
+              <option value="Full sun"      ${s.position === "Full sun"       ? "selected" : ""}>☀️ Full sun</option>
+              <option value="Partial shade" ${s.position === "Partial shade"  ? "selected" : ""}>⛅ Partial shade</option>
+              <option value="Full shade"    ${s.position === "Full shade"     ? "selected" : ""}>🌥️ Full shade</option>
+            </select>
           </div>
         </div>
 
@@ -1876,14 +1898,27 @@
           render();
         });
 
-        document.getElementById("seed-harvest-input")?.addEventListener("change", e => {
-          updateSeed(state.selectedSeedId, { harvestPeriod: e.target.value.trim() || "" });
+        document.getElementById("seed-expiry-input")?.addEventListener("change", e => {
+          const val = parseInt(e.target.value);
+          updateSeed(state.selectedSeedId, { expirationYear: val > 0 ? val : null });
           state.currentNote = document.getElementById("seed-note-input")?.value || "";
           render();
         });
 
-        document.getElementById("seed-expiry-input")?.addEventListener("change", e => {
-          updateSeed(state.selectedSeedId, { expirationDate: e.target.value || null });
+        document.getElementById("seed-sowing-input")?.addEventListener("change", e => {
+          updateSeed(state.selectedSeedId, { sowingMonths: e.target.value.trim() || "" });
+          state.currentNote = document.getElementById("seed-note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("seed-harvest-input")?.addEventListener("change", e => {
+          updateSeed(state.selectedSeedId, { harvestMonths: e.target.value.trim() || "" });
+          state.currentNote = document.getElementById("seed-note-input")?.value || "";
+          render();
+        });
+
+        document.getElementById("seed-position-select")?.addEventListener("change", e => {
+          updateSeed(state.selectedSeedId, { position: e.target.value || "" });
           state.currentNote = document.getElementById("seed-note-input")?.value || "";
           render();
         });
@@ -1927,8 +1962,10 @@
       state.seeds.push({
         id: Date.now(), name,
         numberPerPacket: null,
-        harvestPeriod: "",
-        expirationDate: null,
+        sowingMonths:   "",
+        harvestMonths:  "",
+        position:       "",
+        expirationYear: null,
         notes: [],
       });
       saveState();
