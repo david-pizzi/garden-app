@@ -2052,20 +2052,40 @@
               method: "POST",
               headers: { "Content-Type": "application/json", "api-key": apiKey },
               body: JSON.stringify({
-                messages: [{
-                  role: "user",
-                  content: [
-                    {
-                      type: "text",
-                      text: `Extract information from this seed packet image. Return ONLY a JSON object, no markdown:\n{"name":"plant name and variety","sowingMonths":"e.g. Mar – Jun or empty string","harvestMonths":"e.g. Jul – Oct or empty string","position":"Full sun or Partial shade or Full shade or empty string","numberPerPacket":null,"expirationYear":null}`,
-                    },
-                    {
-                      type: "image_url",
-                      image_url: { url: `data:${file.type || "image/jpeg"};base64,${base64}`, detail: "low" },
-                    },
-                  ],
-                }],
-                max_tokens: 300,
+                messages: [
+                  {
+                    role: "system",
+                    content: "You are a seed packet data extractor. Read ALL visible text in the image carefully, including small print, embossed text, and any stamped or printed dates on foil or packaging edges. Return only valid JSON, no markdown, no explanation.",
+                  },
+                  {
+                    role: "user",
+                    content: [
+                      {
+                        type: "text",
+                        text: `Extract the following from this seed packet image and return ONLY a JSON object with exactly these keys:
+
+{
+  "name": "plant name and variety as printed (exclude the brand/supplier name), e.g. French Bean 1500 Year Old Cave Bean",
+  "sowingMonths": "sowing period as printed, e.g. April – June (use en-dash –, or empty string if not found)",
+  "harvestMonths": "harvest period as printed, e.g. July – October (use en-dash –, or empty string if not found)",
+  "position": "normalise to exactly one of: Full sun | Partial shade | Full shade — or empty string if not found",
+  "numberPerPacket": 30,
+  "expirationYear": 2025
+}
+
+Field guidance:
+- name: use the plant species + variety only; ignore brand/supplier name (e.g. "She Grows Veg")
+- numberPerPacket: look for "Average content", "Contents", "Seeds per pack", or any number followed by "seeds" or "Seeds"; return as integer or null
+- expirationYear: look for "Best Before", "BB", "Use by", or any date stamped/embossed on the packet (including foil edges); return only the 4-digit year as integer, or null if genuinely absent`,
+                      },
+                      {
+                        type: "image_url",
+                        image_url: { url: `data:${file.type || "image/jpeg"};base64,${base64}`, detail: "high" },
+                      },
+                    ],
+                  },
+                ],
+                max_tokens: 400,
               }),
             }
           );
